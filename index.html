@@ -164,11 +164,18 @@
             display: none;
             text-align: center;
         }
-        .score-box {
-            font-size: 48px;
-            font-weight: bold;
-            color: #1a73e8;
+        .announcement-box {
+            background-color: #e8f0fe;
+            border: 1px solid #1a73e8;
+            border-radius: 8px;
+            padding: 20px;
             margin: 20px 0;
+            color: #174ea6;
+        }
+        .announcement-box p {
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 1.5;
         }
         #statusPengiriman {
             font-size: 14px;
@@ -259,8 +266,12 @@
     <div class="container" id="resultContainer">
         <h2>UJIAN SELESAI</h2>
         <p class="subtitle">Terima kasih telah menyelesaikan ujian.</p>
-        <div class="score-box" id="scoreDisplay">0</div>
-        <p id="studentInfo"></p>
+
+        <div class="announcement-box">
+            <p>📢 Hasil ujian akan diumumkan di grup kelas.</p>
+        </div>
+
+        <p id="studentInfo" style="font-weight: 500; color: #3c4043;"></p>
         <p id="statusPengiriman">Mengirim data ke rekap nilai...</p>
     </div>
 
@@ -472,6 +483,7 @@
         let sedangUjian = false;
         let dataSiswaAktif = {};
 
+        // fungsi memuat daftar soal ke HTML
         function muatSoal() {
             const container = document.getElementById("questionsList");
             container.innerHTML = "";
@@ -499,19 +511,21 @@
             });
         }
 
+        // Fungsi Memulai Ujian
         function mulaiUjian() {
             const nama = document.getElementById("namaSiswa").value.trim();
             const kelasUtama = document.getElementById("kelasUtama").value;
             const kelasEkonomi = document.getElementById("kelasEkonomi").value;
-            const noAbsen = document.getElementById("noAbsen").value.trim();
-            const tokenInput = document.getElementById("tokenMasuk").value.trim();
+            const noAbsen = document.getElementById("noAbsen").value;
+            const token = document.getElementById("tokenMasuk").value;
 
-            if (!nama || !kelasUtama || !kelasEkonomi || !noAbsen) {
-                alert("Harap isi nama, pilih kelas, dan nomor absen terlebih dahulu!");
+            if (!nama || !kelasUtama || !kelasEkonomi || !noAbsen || !token) {
+                alert("Harap lengkapi semua data pendaftaran!");
                 return;
             }
-            if (tokenInput !== TOKEN_MASUK_VALID) {
-                alert("Token Ujian Salah!");
+
+            if (token !== TOKEN_MASUK_VALID) {
+                alert("Token masuk tidak valid! Periksa kembali token dari guru/pengawas.");
                 return;
             }
 
@@ -522,102 +536,99 @@
                 noAbsen: noAbsen
             };
 
-            document.getElementById("displayNama").innerText = nama;
-            document.getElementById("displayDetail").innerText = `Kelas: ${kelasUtama} | Kelas Ekonomi: ${kelasEkonomi} | No. Absen: ${noAbsen}`;
-            
+            document.getElementById("displayNama").innerText = nama.toUpperCase();
+            document.getElementById("displayDetail").innerText = `${kelasUtama} | ${kelasEkonomi} | No. Absen: ${noAbsen}`;
+
             muatSoal();
 
             document.getElementById("loginBox").style.display = "none";
             document.getElementById("examContainer").style.display = "block";
-            
+
             sedangUjian = true;
         }
 
-        function selesaiUjian() {
-            if (!confirm("Apakah Anda yakin ingin menyelesaikan ujian?")) return;
-
-            document.getElementById("btnKirim").disabled = true;
-            document.getElementById("btnKirim").innerText = "Memproses...";
-
-            let benar = 0;
-            bankSoal.forEach(q => {
-                const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
-                if (selected && selected.value === q.kunci) {
-                    benar++;
-                }
-            });
-
-            const totalSoal = bankSoal.length;
-            const nilaiAkhir = Math.round((benar / totalSoal) * 100);
-
-            sedangUjian = false;
-            
-            document.getElementById("examContainer").style.display = "none";
-            document.getElementById("resultContainer").style.display = "block";
-            document.getElementById("scoreDisplay").innerText = nilaiAkhir;
-            document.getElementById("studentInfo").innerText = `${dataSiswaAktif.nama} (${dataSiswaAktif.kelasUtama} / ${dataSiswaAktif.kelasEkonomi} / Absen: ${dataSiswaAktif.noAbsen}) | Benar: ${benar} dari ${totalSoal} Soal`;
-
-            // Kirim Data ke Google Sheets
-            kirimKeGoogleSheets(dataSiswaAktif, benar, totalSoal, nilaiAkhir);
-        }
-
-        function kirimKeGoogleSheets(siswa, benar, totalSoal, nilai) {
-            const statusElement = document.getElementById("statusPengiriman");
-
-            if (!SCRIPT_URL || SCRIPT_URL === "TEMPEL_URL_APPS_SCRIPT_ANDA_DI_SINI") {
-                statusElement.innerText = "Selesai (URL Apps Script belum dikonfigurasi).";
-                return;
-            }
-
-            const payload = {
-                nama: siswa.nama,
-                kelasUtama: siswa.kelasUtama,
-                kelasEkonomi: siswa.kelasEkonomi,
-                noAbsen: siswa.noAbsen,
-                benar: benar,
-                totalSoal: totalSoal,
-                nilai: nilai
-            };
-
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            })
-            .then(() => {
-                statusElement.innerText = "✓ Nilai berhasil direkap ke Google Sheets!";
-                statusElement.style.color = "#0f9d58";
-            })
-            .catch(error => {
-                console.error("Gagal mengirim:", error);
-                statusElement.innerText = "× Gagal mengirim ke Google Sheets. Hubungi pengawas.";
-                statusElement.style.color = "#d93025";
-            });
-        }
-
-        // --- SISTEM DETEKSI PELANGGARAN ---
-        document.addEventListener("visibilitychange", function() {
-            if (document.hidden && sedangUjian) {
-                kunciLayar();
+        // Deteksi Pengawas / Pindah Tab (Sistem Kunci)
+        window.addEventListener("blur", function() {
+            if (sedangUjian) {
+                document.getElementById("lockOverlay").style.display = "flex";
             }
         });
 
-        function kunciLayar() {
-            document.getElementById("lockOverlay").style.display = "flex";
-        }
-
         function bukaKunci() {
-            const inputPIN = document.getElementById("pinPengawasInput").value;
-
-            if (inputPIN === PIN_PENGAWAS) {
+            const pinInput = document.getElementById("pinPengawasInput").value;
+            if (pinInput === PIN_PENGAWAS) {
                 document.getElementById("lockOverlay").style.display = "none";
                 document.getElementById("pinPengawasInput").value = "";
-                alert("Kuncian berhasil dibuka. Silakan lanjutkan ujian.");
             } else {
-                alert("PIN Pengawas Salah!");
-                document.getElementById("pinPengawasInput").value = "";
+                alert("PIN Pengawas salah!");
             }
+        }
+
+        // Selesai Ujian & Kirim Data
+        function selesaiUjian() {
+            let benar = 0;
+            let salah = 0;
+            let totalSoal = bankSoal.length;
+            let jawabanSiswa = [];
+
+            bankSoal.forEach((item) => {
+                const selectedOption = document.querySelector(`input[name="q${item.id}"]:checked`);
+                const val = selectedOption ? selectedOption.value : "-";
+                
+                jawabanSiswa.push({
+                    soalId: item.id,
+                    jawaban: val
+                });
+
+                if (val === item.kunci) {
+                    benar++;
+                } else {
+                    salah++;
+                }
+            });
+
+            const nilaiSkala100 = Math.round((benar / totalSoal) * 100);
+
+            if (!confirm("Apakah Anda yakin ingin menyelesaikan dan mengirim jawaban ujian ini?")) {
+                return;
+            }
+
+            sedangUjian = false;
+
+            document.getElementById("examContainer").style.display = "none";
+            document.getElementById("resultContainer").style.display = "block";
+            document.getElementById("studentInfo").innerText = `${dataSiswaAktif.nama} (${dataSiswaAktif.kelasUtama} / ${dataSiswaAktif.kelasEkonomi})`;
+
+            // Payload Kirim Data
+            const payload = {
+                nama: dataSiswaAktif.nama,
+                kelasUtama: dataSiswaAktif.kelasUtama,
+                kelasEkonomi: dataSiswaAktif.kelasEkonomi,
+                noAbsen: dataSiswaAktif.noAbsen,
+                benar: benar,
+                salah: salah,
+                nilai: nilaiSkala100,
+                detailJawaban: JSON.stringify(jawabanSiswa)
+            };
+
+            // Kirim ke Apps Script
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                document.getElementById("statusPengiriman").innerText = "✅ Data nilai berhasil terkirim ke sistem rekap!";
+                document.getElementById("statusPengiriman").style.color = "#137333";
+            })
+            .catch((err) => {
+                console.error(err);
+                document.getElementById("statusPengiriman").innerText = "⚠️ Terjadi kesalahan jaringan saat mengirim data. Tetap simpan halaman ini!";
+                document.getElementById("statusPengiriman").style.color = "#d93025";
+            });
         }
     </script>
 </body>
