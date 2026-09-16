@@ -38,8 +38,13 @@
             margin-bottom: 20px;
             text-align: center;
         }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
         .input-group {
             margin-bottom: 15px;
+            flex: 1;
         }
         label {
             font-size: 13px;
@@ -48,15 +53,16 @@
             display: block;
             margin-bottom: 5px;
         }
-        input {
+        input, select {
             width: 100%;
             padding: 10px;
             border: 1px solid #dadce0;
             border-radius: 6px;
             font-size: 14px;
             outline: none;
+            background-color: white;
         }
-        input:focus {
+        input:focus, select:focus {
             border-color: #1a73e8;
         }
         button {
@@ -169,6 +175,13 @@
             color: #5f6368;
             margin-top: 10px;
         }
+
+        @media (max-width: 600px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -183,9 +196,48 @@
             <input type="text" id="namaSiswa" placeholder="Masukkan nama lengkap" required>
         </div>
 
-        <div class="input-group">
-            <label>TOKEN MASUK UJIAN</label>
-            <input type="password" id="tokenMasuk" placeholder="Masukkan Token Ujian" required>
+        <div class="form-row">
+            <div class="input-group">
+                <label>KELAS UTAMA</label>
+                <select id="kelasUtama" required>
+                    <option value="" disabled selected>-- Pilih Kelas Utama --</option>
+                    <option value="XI A">XI A</option>
+                    <option value="XI B">XI B</option>
+                    <option value="XI C">XI C</option>
+                    <option value="XI D">XI D</option>
+                    <option value="XI E">XI E</option>
+                    <option value="XI F">XI F</option>
+                    <option value="XI G">XI G</option>
+                    <option value="XI H">XI H</option>
+                    <option value="XI I">XI I</option>
+                    <option value="XI J">XI J</option>
+                    <option value="XI K">XI K</option>
+                    <option value="XI L">XI L</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>KELAS EKONOMI</label>
+                <select id="kelasEkonomi" required>
+                    <option value="" disabled selected>-- Pilih Kelas Ekonomi --</option>
+                    <option value="XI Ekonomi 1">XI Ekonomi 1</option>
+                    <option value="XI Ekonomi 2">XI Ekonomi 2</option>
+                    <option value="XI Ekonomi 3">XI Ekonomi 3</option>
+                    <option value="XI Ekonomi 4">XI Ekonomi 4</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="input-group">
+                <label>NO ABSEN</label>
+                <input type="number" id="noAbsen" placeholder="Contoh: 12" min="1" required>
+            </div>
+
+            <div class="input-group">
+                <label>TOKEN MASUK UJIAN</label>
+                <input type="password" id="tokenMasuk" placeholder="Masukkan Token Ujian" required>
+            </div>
         </div>
 
         <button onclick="mulaiUjian()">MULAI UJIAN</button>
@@ -193,7 +245,8 @@
 
     <!-- 2. TAMPILAN SOAL UJIAN -->
     <div class="container" id="examContainer">
-        <h3 id="displayNama" style="margin-bottom: 15px; color: #5f6368;"></h3>
+        <h3 id="displayNama" style="margin-bottom: 5px; color: #1a73e8;"></h3>
+        <p id="displayDetail" style="margin-bottom: 15px; color: #5f6368; font-size: 14px;"></p>
         <hr style="margin-bottom: 20px;">
         
         <form id="quizForm">
@@ -231,46 +284,22 @@
         // Link Apps Script
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxWdHbi5lsCvEHL5J7vUENRRc7QxKrFdUuC9yK0POY-too34bSTlYEcki9gO7L0FJup/exec";
 
-        // BANK SOAL EKONOMI (15 SOAL)
+        // BANK SOAL EKONOMI (15 SOAL REVISI)
         const bankSoal = [
             {
                 id: 1,
-                soal: "Negara \"Makmur Sejahtera\" mencatatkan data makroekonomi pada akhir tahun anggaran 2025 dalam satuan miliar rupiah sebagai berikut: Produk Domestik Bruto (PDB) tercatat sebesar Rp950.000, pendapatan faktor produksi warga negara di luar negeri sebesar Rp45.000, dan pendapatan faktor produksi warga negara asing di dalam negeri sebesar Rp20.000. Penyusutan barang modal dan penggantian tercatat Rp35.000, pajak tidak langsung sebesar Rp25.000, serta subsidi pemerintah yang diberikan sebesar Rp10.000. Komponen dari laba bersih yang dialokasikan meliputi laba ditahan Rp15.000, pajak perseroan Rp12.000, dan iuran jaminan sosial/asuransi Rp8.000. Pemerintah juga mendistribusikan pembayaran transfer (transfer payment) kepada masyarakat sebesar Rp18.000, sementara pajak langsung yang wajib dibayar oleh penduduk tercatat sebesar Rp30.000.<br><br>Berdasarkan data komprehensif tersebut, besarnya Disposable Income (DI) negara \"Makmur Sejahtera\" adalah...",
+                soal: "Pertumbuhan ekonomi yang ditandai dengan bertambahnya kapasitas produksi barang dan jasa secara agregat memberikan dampak positif langsung bagi struktur ketenagakerjaan suatu negara. Ekspansi sektor-sektor usaha, industri, dan perdagangan tidak hanya menaikkan total pendapatan negara serta rata-rata pendapatan penduduknya, tetapi juga membuka lebih banyak lowongan kerja baru yang secara efektif mampu menyerap angkatan kerja serta menekan angka pengangguran terbuka di perkotaan maupun perdesaan.<br><br>Berdasarkan fenomena tersebut, mekanisme utama bagaimana pertumbuhan ekonomi mampu mengurangi pengangguran adalah...",
                 pilihan: [
-                    "A. Rp838.000 miliar",
-                    "B. Rp858.000 miliar",
-                    "C. Rp868.000 miliar",
-                    "D. Rp888.000 miliar",
-                    "E. Rp918.000 miliar"
-                ],
-                kunci: "C"
-            },
-            {
-                id: 2,
-                soal: "Dalam dokumen laporan perekonomian nasional Negara \"Adikarya\" periode 2025, diperoleh data statistik pendapatan nasional yang menunjukkan nilai Pendapatan Nasional Neto (NNI) sebesar Rp1.450.000 miliar. Dalam sistem perpajakan dan alokasi keuntungan perusahaan di negara tersebut, tercatat bahwa dana pensiun dan iuran asuransi yang ditarik dari tenaga kerja mencapai Rp35.000 miliar, laba perusahaan yang sengaja tidak dibagikan kepada pemegang saham (laba ditahan) sebesar Rp45.000 miliar, serta besaran pajak atas laba perusahaan (pajak perseroan) sebesar Rp25.000 miliar. Di sisi lain, pemerintah menyalurkan dana bantuan sosial dan subsidi bagi hasil dalam bentuk transfer payment senilai Rp50.000 miliar. Sepanjang tahun tersebut, warga negara juga dikenakan kewajiban membayar pajak penghasilan langsung kepada kas negara sebesar Rp60.000 miliar.<br><br>Berdasarkan data keuangan tersebut, besarnya Disposable Income (DI) yang siap dibelanjakan oleh masyarakat Negara \"Adikarya\" adalah...",
-                pilihan: [
-                    "A. Rp1.325.000 miliar",
-                    "B. Rp1.355.000 miliar",
-                    "C. Rp1.385.000 miliar",
-                    "D. Rp1.415.000 miliar",
-                    "E. Rp1.445.000 miliar"
+                    "A. Peningkatan kapasitas produksi menuntut penambahan input tenaga kerja melalui ekspansi dunia usaha dan pembukaan lapangan kerja baru.",
+                    "B. Pemerintah mewajibkan seluruh perusahaan swasta untuk melakukan pemutusan hubungan kerja demi efisiensi biaya.",
+                    "C. Kenaikan PDB riil secara otomatis menghentikan seluruh aktivitas mekanisasi pabrik dan kembali ke sistem manual.",
+                    "D. Peningkatan ekspor barang mentah memicu perpindahan massal penduduk ke sektor pertanian subsisten.",
+                    "E. Lonjakan investasi asing langsung dialokasikan sepenuhnya untuk pembelian instrumen surat berharga jangka pendek."
                 ],
                 kunci: "A"
             },
             {
-                id: 3,
-                soal: "Badan Pusat Statistik (BPS) sebuah negara berkembang menerbitkan data resmi terkait struktur perekonomian domestik dan demografi penduduk pada tahun 2025. Diketahui Produk Nasional Bruto (PNB) negara tersebut bernilai Rp750.000.000.000.000,00 (tujuh ratus lima puluh triliun rupiah). Total nilai penyusutan atas barang-barang modal selama proses produksi berjalan dalam tahun tersebut mencapai Rp50.000.000.000.000,00, serta besarnya pajak tidak langsung netto yang dipungut pemerintah tercatat sebesar Rp30.000.000.000.000,00. Berdasarkan hasil sensus penduduk mutakhir pertengahan tahun 2025, jumlah total penduduk di negara tersebut tercatat sebanyak 200 juta jiwa.<br><br>Berdasarkan data di atas, besarnya tingkat Pendapatan Per Kapita negara tersebut berdasarkan Pendapatan Nasional Neto (NNI) adalah...",
-                pilihan: [
-                    "A. Rp3.250.000,00 per jiwa",
-                    "B. Rp3.450.000,00 per jiwa",
-                    "C. Rp3.650.000,00 per jiwa",
-                    "D. Rp3.850.000,00 per jiwa",
-                    "E. Rp4.000.000,00 per jiwa"
-                ],
-                kunci: "C"
-            },
-            {
-                id: 4,
+                id: 2,
                 soal: "Pemerintah pusat suatu kawasan regional merilis data Produk Domestik Bruto (PDB) atas dasar harga konstan guna mengukur kinerja makroekonomi secara riil tanpa terdistorsi oleh faktor inflasi. PDB riil wilayah tersebut pada tahun 2024 tercatat sebesar Rp1.200 triliun. Seiring dengan pulihnya sektor investasi global dan peningkatan produktivitas industri manufaktur lokal, PDB riil wilayah tersebut mengalami akselerasi dan meningkat menjadi Rp1.296 triliun pada akhir tahun 2025. Tim perencana ekonomi daerah ditugaskan untuk menghitung tingkat dinamika ekspansi output agregat tersebut guna mengevaluasi pencapaian target Rencana Pembangunan Jangka Menengah Daerah (RPJMD).<br><br>Berdasarkan data tersebut, laju pertumbuhan ekonomi wilayah itu pada tahun 2025 adalah...",
                 pilihan: [
                     "A. 6,5%",
@@ -282,7 +311,139 @@
                 kunci: "D"
             },
             {
+                id: 3,
+                soal: "Meskipun secara nasional angka Produk Domestik Bruto (PDB) suatu negara menunjukkan tren kenaikan yang sangat impresif, pertumbuhan tersebut terkadang tidak terdistribusi secara merata di seluruh lapisan masyarakat maupun wilayah geografis. Pertumbuhan yang cenderung terkonsentrasi di kota-kota besar atau dinikmati oleh kelompok pemilik modal tertentu saja justru dapat memperlebar jurang pemisah antara golongan masyarakat berpendapatan tinggi dan golongan berpendapatan rendah, memicu kecemburuan sosial, serta menghambat pemerataan hasil pembangunan.<br><br>Risiko negatif yang timbul apabila pertumbuhan ekonomi tidak disertai dengan kebijakan distribusi pendapatan yang merata adalah...",
+                pilihan: [
+                    "A. Terjadinya pemerataan kesejahteraan secara otomatis di seluruh pelosok perdesaan.",
+                    "B. Lonjakan tajam kesenjangan sosial serta melebarnya jurang pemisah antara si kaya dan si miskin.",
+                    "C. Penurunan tingkat inflasi secara permanen di seluruh sektor perdagangan ritel.",
+                    "D. Penghentian total segala bentuk kegiatan investasi swasta di kawasan perkotaan.",
+                    "E. Peningkatan drastis cadangan devisa negara hasil ekspor barang modal."
+                ],
+                kunci: "B"
+            },
+            {
+                id: 4,
+                soal: "Negara \"Makmur Sejahtera\" mencatatkan data makroekonomi pada akhir tahun anggaran 2025 dalam satuan miliar rupiah sebagai berikut: Produk Domestik Bruto (PDB) tercatat sebesar Rp950.000, pendapatan faktor produksi warga negara di luar negeri sebesar Rp45.000, dan pendapatan faktor produksi warga negara asing di dalam negeri sebesar Rp20.000. Penyusutan barang modal dan penggantian tercatat Rp35.000, pajak tidak langsung sebesar Rp25.000, serta subsidi pemerintah yang diberikan sebesar Rp10.000. Komponen dari laba bersih yang dialokasikan meliputi laba ditahan Rp15.000, pajak perseroan Rp12.000, dan iuran jaminan sosial/asuransi Rp8.000. Pemerintah juga mendistribusikan pembayaran transfer (transfer payment) kepada masyarakat sebesar Rp18.000, sementara pajak langsung yang wajib dibayar oleh penduduk tercatat sebesar Rp30.000.<br><br>Berdasarkan data komprehensif tersebut, besarnya Disposable Income (DI) negara \"Makmur Sejahtera\" adalah...",
+                pilihan: [
+                    "A. Rp838.000 miliar",
+                    "B. Rp858.000 miliar",
+                    "C. Rp868.000 miliar",
+                    "D. Rp888.000 miliar",
+                    "E. Rp918.000 miliar"
+                ],
+                kunci: "C"
+            },
+            {
                 id: 5,
+                soal: "Salah satu indikator keberhasilan suatu negara dalam mencatatkan pertumbuhan ekonomi yang tinggi adalah tercapainya peningkatan daya beli masyarakat. Dengan bertambahnya pendapatan yang diterima penduduk, masyarakat menjadi lebih leluasa mengakses fasilitas kesehatan yang memadai, mutu pendidikan yang lebih baik, serta infrastruktur publik yang layak. Kondisi ini pada akhirnya bermuara pada peningkatan kualitas hidup secara keseluruhan dan penurunan angka kemiskinan absolut di berbagai wilayah.<br><br>Implikasi positif dari pertumbuhan ekonomi terhadap taraf hidup masyarakat tercermin melalui...",
+                pilihan: [
+                    "A. Penurunan kemampuan masyarakat dalam memenuhi kebutuhan pokok akibat lonjakan harga barang.",
+                    "B. Peningkatan akses terhadap fasilitas kesehatan, pendidikan, dan infrastruktur yang lebih layak berkat naiknya daya beli.",
+                    "C. Pembatasan akses layanan publik secara ketat hanya bagi golongan masyarakat berpendapatan tinggi.",
+                    "D. Penghapusan seluruh bentuk lembaga keuangan formal yang melayani kredit mikro masyarakat.",
+                    "E. Penurunan rata-rata angka harapan hidup penduduk akibat tingginya intensitas jam kerja industri."
+                ],
+                kunci: "B"
+            },
+            {
+                id: 6,
+                soal: "Dalam seminar pembangunan nasional, para ekonom sering kali mendiskusikan indikator keberhasilan kemajuan suatu negara. Sebagian pihak berpendapat bahwa fokus utama negara adalah mengejar angka pertumbuhan PDB yang tinggi setiap tahunnya. Namun, pihak lain menekankan bahwa tingginya pertumbuhan PDB tidak ada artinya jika kemiskinan massal, ketimpangan distribusi pendapatan, kerusakan lingkungan, serta rendahnya kualitas pendidikan dan kesehatan masyarakat tidak kunjung terselesaikan secara menyeluruh.<br><br>Pernyataan di bawah ini yang paling tepat membedakan hakikat antara pertumbuhan ekonomi dan pembangunan ekonomi adalah...",
+                pilihan: [
+                    "A. Pertumbuhan ekonomi menitikberatkan pada perluasan kesempatan kerja dan pemerataan pendapatan semata, sedangkan pembangunan ekonomi murni menghitung akumulasi modal fisik.",
+                    "B. Pertumbuhan ekonomi merupakan proses peningkatan output fisik secara kuantitatif, sedangkan pembangunan ekonomi mencakup perubahan kualitatif, kelembagaan, pemerataan kesejahteraan, serta keadilan sosial secara luas.",
+                    "C. Pertumbuhan ekonomi hanya terjadi di negara maju, sedangkan pembangunan ekonomi hanya dapat dilakukan oleh negara berkembang melalui pinjaman luar negeri.",
+                    "D. Pertumbuhan ekonomi mengabaikan sektor industri modern, sementara pembangunan ekonomi menolak modernisasi sektor pertanian tradisional.",
+                    "E. Pertumbuhan ekonomi dan pembangunan ekonomi adalah dua istilah mutlak yang memiliki arti, metode hitung, dan tujuan akhir yang sepenuhnya identik."
+                ],
+                kunci: "B"
+            },
+            {
+                id: 7,
+                soal: "Dalam upaya mengejar target pertumbuhan output ekonomi yang tinggi dan instan, sektor industri ekstraktif dan manufaktur sering kali mengabaikan aspek kelestarian ekologis. Eksploitasi sumber daya alam secara berlebihan, pembukaan lahan hutan secara masif untuk perkebunan monokultur, serta pembuangan limbah produksi yang tidak terkontrol memicu kerusakan lingkungan hidup yang parah, pencemaran air dan udara, serta ancaman krisis iklim jangka panjang yang justru merugikan kelangsungan hidup generasi masa depan.<br><br>Dampak negatif dari pertumbuhan ekonomi yang tidak berwawasan lingkungan terhadap keberlanjutan pembangunan adalah...",
+                pilihan: [
+                    "A. Peningkatan kesuburan tanah secara alami di kawasan daerah aliran sungai.",
+                    "B. Terjadinya kerusakan alam, pencemaran lingkungan, serta eksploitasi sumber daya secara berlebihan demi mengejar target output.",
+                    "C. Penurunan suhu global secara drastis akibat berkurangnya emisi gas rumah kaca pabrik.",
+                    "D. Peningkatan cadangan sumber daya alam tak terbarukan secara berlipat ganda.",
+                    "E. Hilangnya seluruh hambatan birokrasi dalam perizinan pendirian kawasan industri berat."
+                ],
+                kunci: "B"
+            },
+            {
+                id: 8,
+                soal: "Badan Pusat Statistik (BPS) sebuah negara berkembang menerbitkan data resmi terkait struktur perekonomian domestik dan demografi penduduk pada tahun 2025. Diketahui Produk Nasional Bruto (PNB) negara tersebut bernilai Rp750.000.000.000.000,00 (tujuh ratus lima puluh triliun rupiah). Total nilai penyusutan atas barang-barang modal selama proses produksi berjalan dalam tahun tersebut mencapai Rp50.000.000.000.000,00, serta besarnya pajak tidak langsung netto yang dipungut pemerintah tercatat sebesar Rp30.000.000.000.000,00. Berdasarkan hasil sensus penduduk mutakhir pertengahan tahun 2025, jumlah total penduduk di negara tersebut tercatat sebanyak 200 juta jiwa.<br><br>Berdasarkan data di atas, besarnya tingkat Pendapatan Per Kapita negara tersebut berdasarkan Pendapatan Nasional Neto (NNI) adalah...",
+                pilihan: [
+                    "A. Rp3.250.000,00 per jiwa",
+                    "B. Rp3.450.000,00 per jiwa",
+                    "C. Rp3.650.000,00 per jiwa",
+                    "D. Rp3.850.000,00 per jiwa",
+                    "E. Rp4.000.000,00 per jiwa"
+                ],
+                kunci: "C"
+            },
+            {
+                id: 9,
+                soal: "Dalam sejarah pemikiran ekonomi, berbagai mazhab mencoba menjelaskan motor penggerak dinamika pertumbuhan ekonomi. Mazhab Klasik yang dimotori oleh Adam Smith melihat spesialisasi tenaga kerja dan perluasan pasar sebagai penggerak utama kekayaan bangsa. Di sisi lain, ekonom Joseph Schumpeter menawarkan perspektif yang berbeda dengan menekankan bahwa pertumbuhan ekonomi kapitalis digerakkan oleh inovasi radikal dan fenomena \"pembongkaran kreatif\" (creative destruction) yang dipelopori oleh para wirausahawan (entrepreneurs), yang sekaligus memacu investasi dan efisiensi produksi.<br><br>Berdasarkan perbandingan kedua pandangan tersebut, persamaan prinsip fundamental antara teori Klasik dan teori Schumpeter dalam memandang pertumbuhan ekonomi adalah...",
+                pilihan: [
+                    "A. Keduanya menganggap bahwa pertumbuhan ekonomi dikendalikan secara mutlak oleh perencanaan terpusat pemerintah pusat.",
+                    "B. Keduanya memandang pertumbuhan ekonomi sebagai proses dinamis yang digerakkan oleh inisiatif pelaku ekonomi swasta dalam meningkatkan produktivitas, inovasi, dan efisiensi produksi.",
+                    "C. Keduanya sepakat bahwa pertumbuhan ekonomi jangka panjang pasti akan berakhir pada titik stasioner akibat keterbatasan lahan pertanian.",
+                    "D. Keduanya menolak segala bentuk akumulasi modal dan adopsi mesin-mesin modern dalam proses produksi industri.",
+                    "E. Keduanya menyatakan bahwa upah buruh harus ditekan pada tingkat subsisten mutlak secara permanen."
+                ],
+                kunci: "B"
+            },
+            {
+                id: 10,
+                soal: "Pertumbuhan ekonomi yang terlalu cepat terkadang dapat memicu ketidakseimbangan struktural antara sisi permintaan agregat (aggregate demand) dan sisi penawaran agregat (aggregate supply). Ketika daya beli masyarakat melonjak tajam akibat ekspansi kredit dan kenaikan pendapatan, sementara kapasitas produksi dunia usaha belum mampu mengimbangi lonjakan permintaan tersebut secara cepat, maka kelangkaan barang dan jasa di pasar domestik tidak dapat dihindarkan, yang pada akhirnya memicu kenaikan harga-harga secara umum.<br><br>Fenomena tantangan ekonomi yang digambarkan dalam narasi tersebut dikenal sebagai...",
+                pilihan: [
+                    "A. Deflasi struktural berkepanjangan",
+                    "B. Tekanan inflasi akibat kelebihan permintaan (demand-pull inflation)",
+                    "C. Krisis pengangguran teknologi",
+                    "D. Surplus neraca pembayaran internasional",
+                    "E. Apresiasi nilai tukar mata uang domestik secara drastis"
+                ],
+                kunci: "B"
+            },
+            {
+                id: 11,
+                soal: "Dalam buku klasik The Stages of Economic Growth karya W.W. Rostow, proses pembangunan ekonomi suatu bangsa dijelaskan melalui lima tahapan linier. Salah satu fase krusial dalam teori ini adalah fase \"tinggal landas\" (the take-off), di mana hambatan-hambatan tradisional terhadap pertumbuhan ekonomi berhasil dihancurkan, tingkat investasi produktif melonjak melampaui 10% dari Pendapatan Nasional, dan sektor-sektor industri pelopor baru tumbuh secara eksponensial sehingga memicu ekspansi ekonomi yang bersifat mandiri (self-sustained growth).<br><br>Kondisi empiris yang paling mencerminkan suatu negara sedang berada pada fase \"tinggal landas\" (take-off) menurut Rostow adalah...",
+                pilihan: [
+                    "A. Perekonomian masih didominasi oleh kegiatan pertanian subsisten tradisional dengan penggunaan teknologi purba dan produktivitas sangat rendah.",
+                    "B. Masyarakat sudah mencapai era konsumsi massal tinggi dengan kepemilikan barang-barang mewah dan jasa rekreasi yang melimpah.",
+                    "C. Terjadi transformasi struktural yang ditandai oleh lonjakan investasi domestik, tumbuhnya industri manufaktur modern, dan ekspansi ekonomi yang berkelanjutan.",
+                    "D. Struktur ekonomi mengalami kemandekan total karena ketiadaan kaum wirausahawan dan minimnya infrastruktur transportasi.",
+                    "E. Seluruh kegiatan ekonomi dikelola secara komunal tanpa mengenal sistem pasar bebas maupun spesialisasi kerja."
+                ],
+                kunci: "C"
+            },
+            {
+                id: 12,
+                soal: "Dalam dokumen laporan perekonomian nasional Negara \"Adikarya\" periode 2025, diperoleh data statistik pendapatan nasional yang menunjukkan nilai Pendapatan Nasional Neto (NNI) sebesar Rp1.450.000 miliar. Dalam sistem perpajakan dan alokasi keuntungan perusahaan di negara tersebut, tercatat bahwa dana pensiun dan iuran asuransi yang ditarik dari tenaga kerja mencapai Rp35.000 miliar, laba perusahaan yang sengaja tidak dibagikan kepada pemegang saham (laba ditahan) sebesar Rp45.000 miliar, serta besaran pajak atas laba perusahaan (pajak perseroan) sebesar Rp25.000 miliar. Di sisi lain, pemerintah menyalurkan dana bantuan sosial dan subsidi bagi hasil dalam bentuk transfer payment senilai Rp50.000 miliar. Sepanjang tahun tersebut, warga negara juga dikenakan kewajiban membayar pajak penghasilan langsung kepada kas negara sebesar Rp60.000 miliar.<br><br>Berdasarkan data keuangan tersebut, besarnya Disposable Income (DI) yang siap dibelanjakan oleh masyarakat Negara \"Adikarya\" adalah...",
+                pilihan: [
+                    "A. Rp1.325.000 miliar",
+                    "B. Rp1.355.000 miliar",
+                    "C. Rp1.385.000 miliar",
+                    "D. Rp1.415.000 miliar",
+                    "E. Rp1.445.000 miliar"
+                ],
+                kunci: "A"
+            },
+            {
+                id: 13,
+                soal: "Dalam literatur makroekonomi modern, terdapat dua model penting yang menganalisis hubungan antara investasi, modal, dan laju pertumbuhan ekonomi jangka panjang. Model Harrod-Domar menekankan bahwa pertumbuhan ekonomi sangat bergantung pada rasio tabungan dan rasio modal-output (ICOR), serta mengasumsikan proporsi produksi yang kaku. Sementara itu, model pertumbuhan Neo-Klasik (Solow-Swan) memperbaiki kelemahan tersebut dengan memasukkan asumsi fleksibilitas substitusi faktor produksi serta konsep diminishing returns pada modal fisik, yang menyimpulkan bahwa pertumbuhan jangka panjang tanpa inovasi teknologi dan efisiensi akan mencapai titik keseimbangan mantap (steady state).<br><br>Implikasi kebijakan ekonomi praktis yang membedakan fokus utama antara model Harrod-Domar dan model Solow-Swan bagi negara berkembang adalah...",
+                pilihan: [
+                    "A. Harrod-Domar berfokus pada pentingnya mobilisasi tabungan dan akumulasi investasi fisik untuk mencegah pengangguran kapasitas, sedangkan Solow-Swan menekankan pentingnya kemajuan teknologi, inovasi, dan produktivitas jangka panjang.",
+                    "B. Harrod-Domar melarang adanya investasi asing langsung, sementara Solow-Swan mewajibkan penutupan total sistem perbankan domestik.",
+                    "C. Harrod-Domar menyatakan pertumbuhan ekonomi tidak dipengaruhi oleh besarnya tabungan masyarakat sama sekali.",
+                    "D. Solow-Swan mengabaikan peranan tenaga kerja dan hanya berfokus pada jumlah luas lahan pertanian.",
+                    "E. Keduanya sepakat bahwa pertumbuhan ekonomi hanya ditentukan oleh faktor cuaca dan kesuburan tanah alami."
+                ],
+                kunci: "A"
+            },
+            {
+                id: 14,
                 soal: "Laporan tahunan bank sentral sebuah negara berkembang menunjukkan adanya fluktuasi siklus bisnis dalam tiga tahun terakhir akibat dinamika rantai pasok global. Pada tahun 2023, Produk Domestik Bruto (PDB) riil negara tersebut berada pada angka Rp2.500 triliun. Memasuki tahun 2024, terjadi perlambatan ekonomi yang menyebabkan PDB riil terkoreksi tipis atau tumbuh secara moderat sehingga mencapai Rp2.600 triliun. Selanjutnya, pada tahun 2025, perekonomian kembali mencatatkan pertumbuhan yang lebih kuat dengan nilai PDB riil melonjak menjadi Rp2.782 triliun.<br><br>Berdasarkan data runtun waktu (time series) tersebut, berapa besar laju pertumbuhan ekonomi negara tersebut pada tahun 2025 jika dibandingkan dengan tahun 2024?",
                 pilihan: [
                     "A. 7,0%",
@@ -294,122 +455,14 @@
                 kunci: "A"
             },
             {
-                id: 6,
-                soal: "Dalam karyanya yang monumental, An Inquiry into the Nature and Causes of the Wealth of Nations (1776), Adam Smith meletakkan fondasi dasar mengenai bagaimana suatu kekayaan bangsa dapat ditingkatkan secara optimal melalui spesialisasi dan perluasan pasar. Smith menekankan bahwa mesin utama penggerak pertumbuhan ekonomi bukanlah intervensi birokratis pemerintah, melainkan kekuatan mekanisme pasar bebas yang didorong oleh pembagian kerja (division of labor) dan akumulasi kapital yang dilakukan secara mandiri oleh para pelaku usaha yang mengejar keuntungan pribadi namun secara tidak langsung dibimbing oleh \"tangan tak terlihat\" (invisible hand).<br><br>Pernyataan di bawah ini yang paling tepat mencerminkan pandangan mazhab Klasik menurut Adam Smith terhadap proses pertumbuhan ekonomi adalah...",
-                pilihan: [
-                    "A. Pertumbuhan ekonomi sepenuhnya dikendalikan oleh perencanaan terpusat negara melalui kepemilikan alat-alat produksi kolektif.",
-                    "B. Spesialisasi tenaga kerja dan perluasan pasar memicu peningkatan produktivitas yang menjadi motor utama akumulasi kekayaan bangsa.",
-                    "C. Pertumbuhan ekonomi jangka panjang akan mengalami kemandekan (stasioner) akibat berlakunya hukum hasil lebih yang semakin berkurang pada sektor lahan pertanian.",
-                    "D. Pertumbuhan ekonomi ditentukan secara mutlak oleh besarnya pengeluaran agregat pemerintah dalam menjaga stabilitas permintaan efektif jangka pendek.",
-                    "E. Akumulasi modal hanya dapat dicapai apabila kaum kapitalis menekan upah buruh serendah mungkin mendekati tingkat subsisten mutlak."
-                ],
-                kunci: "B"
-            },
-            {
-                id: 7,
-                soal: "Dalam analisis ekonomi politik klasik yang dikembangkan oleh David Ricardo, dinamika pertumbuhan ekonomi sangat dipengaruhi oleh interaksi antara tiga golongan utama dalam masyarakat, yaitu pemilik tanah, kaum pekerja (buruh), dan para pemilik modal (kapitalis). Ricardo berargumen bahwa pertumbuhan ekonomi jangka panjang memiliki kecenderungan alami untuk melambat dan akhirnya berhenti pada suatu titik yang disebut stationary state (keadaan stasioner). Hal ini terjadi karena pertumbuhan populasi mendesak pemanfaatan lahan pertanian yang semakin marjinal dan kurang subur, sehingga biaya produksi pangan melonjak.<br><br>Berdasarkan teori pertumbuhan ekonomi mazhab Klasik aliran David Ricardo, faktor utama yang menyebabkan perekonomian akhirnya mencapai titik stasioner adalah...",
-                pilihan: [
-                    "A. Terjadinya kejenuhan ekspor akibat proteksionisme perdagangan internasional antarnegara maju.",
-                    "B. Penurunan tingkat upah nominal secara drastis yang memicu revolusi sosial kaum buruh pabrik.",
-                    "C. Keterbatasan ketersediaan lahan subur yang memicu kenaikan sewa tanah dan biaya hidup serta upah subsisten.",
-                    "D. Keengganan pemerintah dalam mencetak uang kartal untuk membiayai proyek infrastruktur publik.",
-                    "E. Dominasi sektor industri modern yang sepenuhnya menggantikan peranan sektor agraris tradisional."
-                ],
-                kunci: "C"
-            },
-            {
-                id: 8,
-                soal: "W.W. Rostow dalam bukunya The Stages of Economic Growth mengemukakan pandangan bahwa proses pembangunan ekonomi historis yang dialami oleh setiap negara dapat diklasifikasikan ke dalam lima tahapan linier yang berurutan, mulai dari masyarakat tradisional hingga tahap konsumsi massal tinggi. Salah satu fase krusial dalam teori ini ditandai dengan runtuhnya hambatan-hambatan tradisional, dimulainya investasi produktif secara masif (biasanya mencapai kisaran 10% dari Pendapatan Nasional), berkembangnya sektor industri manufaktur baru secara cepat, serta terciptanya kerangka institusi politik dan sosial yang mendukung modernisasi ekonomi.<br><br>Tahapan pertumbuhan ekonomi menurut W.W. Rostow yang digambarkan melalui karakteristik di atas dikenal sebagai fase...",
-                pilihan: [
-                    "A. Masyarakat tradisional (The traditional society)",
-                    "B. Prasyarat untuk tinggal landas (The preconditions for take-off)",
-                    "C. Tinggal landas (The take-off)",
-                    "D. Menuju kedewasaan (The drive to maturity)",
-                    "E. Era konsumsi massal tinggi (The age of high mass-consumption)"
-                ],
-                kunci: "B"
-            },
-            {
-                id: 9,
-                soal: "Sebuah negara berkembang di kawasan Asia Tenggara sedang mengalami transformasi struktural yang sangat masif. Sektor pertanian subsisten tradisional perlahan-lahan mulai ditinggalkan karena tenaga kerja beralih secara besar-besaran ke sektor industri modern dan perkotaan. Investasi domestik melonjak tajam, teknologi modern diadopsi secara luas dalam proses produksi, dan pertumbuhan ekonomi menjadi fenomena yang permanen serta swasembada (self-sustained growth). Berdasarkan kerangka pemikiran historis W.W. Rostow, negara tersebut kini sedang berada pada fase lompatan struktural yang sangat menentukan arah kemajuan ekonominya.<br><br>Fase atau tahapan pertumbuhan ekonomi Rostow yang sedang dialami oleh negara tersebut adalah...",
-                pilihan: [
-                    "A. The traditional society",
-                    "B. The preconditions for take-off",
-                    "C. The take-off (Tinggal landas)",
-                    "D. The drive to maturity",
-                    "E. The age of high mass-consumption"
-                ],
-                kunci: "C"
-            },
-            {
-                id: 10,
-                soal: "Pertumbuhan ekonomi sering kali diartikan secara keliru sebagai sinonim dari pembangunan ekonomi secara keseluruhan. Padahal, secara konseptual, pertumbuhan ekonomi memiliki cakupan yang lebih spesifik, yaitu peningkatan kapasitas produksi barang dan jasa suatu perekonomian dalam kurun waktu tertentu, yang biasanya diukur melalui persentase perubahan Produk Domestik Bruto (PDB) riil. Fokus utama dari analisis pertumbuhan ekonomi bersifat kuantitatif murni tanpa harus menelaah secara mendalam apakah distribusi pendapatan sudah merata atau apakah struktur sosial masyarakat telah mengalami perbaikan fundamental.<br><br>Pernyataan berikut ini yang paling akurat dalam membedakan karakteristik pertumbuhan ekonomi dibandingkan dengan pembangunan ekonomi adalah...",
-                pilihan: [
-                    "A. Pertumbuhan ekonomi selalu mencakup perbaikan kualitas hidup, penurunan tingkat kemiskinan, dan pemerataan distribusi pendapatan secara simultan.",
-                    "B. Pertumbuhan ekonomi merupakan proses multidimensional yang mengubah struktur kelembagaan, sikap mental, dan sistem sosial masyarakat.",
-                    "C. Pertumbuhan ekonomi berfokus pada peningkatan output fisik agregat (kenaikan PDB riil), terlepas dari persoalan pemerataan hasil pembangunan tersebut.",
-                    "D. Pertumbuhan ekonomi hanya dapat tercapai jika suatu negara menerapkan sistem ekonomi komando terpusat yang ketat.",
-                    "E. Pertumbuhan ekonomi tidak memerlukan akumulasi modal fisik maupun investasi teknologi baru dalam sektor industri."
-                ],
-                kunci: "C"
-            },
-            {
-                id: 11,
-                soal: "Joseph Schumpeter mengemukakan teori pertumbuhan ekonomi yang sangat unik karena menempatkan kaum wirausahawan (entrepreneurs / inovator) sebagai motor penggerak utama dinamika kapitalisme. Menurut Schumpeter, pertumbuhan ekonomi bukanlah proses yang berjalan mulus secara linier, melainkan proses \"pembongkaran kreatif\" (creative destruction) di mana inovasi terus-menerus merusak keseimbangan lama untuk menciptakan struktur ekonomi yang baru dan lebih efisien. Inovasi ini dapat berupa penemuan produk baru, metode produksi baru, pembukaan pasar baru, atau sumber bahan baku baru.<br><br>Berdasarkan teori pertumbuhan ekonomi Joseph Schumpeter, manakah fenomena berikut yang paling tepat merepresentasikan konsep creative destruction?",
-                pilihan: [
-                    "A. Pemerintah menaikkan tarif pajak penghasilan badan secara progresif untuk meredam laju inflasi musiman.",
-                    "B. Perusahaan transportasi berbasis aplikasi digital (ridesharing) hadir dan mendisrupsi sistem transportasi konvensional yang berujung pada perubahan pola mobilitas masyarakat.",
-                    "C. Bank sentral memutuskan untuk menurunkan suku bunga acuan guna merangsang ekspansi kredit perbankan komersial.",
-                    "D. Pemerintah daerah memperluas kawasan lahan pertanian subsisten demi mencapai swasembada pangan daerah.",
-                    "E. Masyarakat mengurangi tingkat konsumsi barang mewah dan meningkatkan angka tabungan di lembaga keuangan formal."
-                ],
-                kunci: "B"
-            },
-            {
-                id: 12,
-                soal: "Model pertumbuhan ekonomi Harrod-Domar merupakan salah satu model pasca-Keynesian yang menganalisis syarat-syarat yang harus dipenuhi agar suatu perekonomian dapat tumbuh dengan stabil dalam jangka panjang (steady growth). Model ini menekankan peran kunci dari investasi modal fisik. Menurut Harrod-Domar, setiap tambahan investasi neto akan menciptakan kapasitas produksi sekaligus melipatgandakan pendapatan nasional melalui mekanisme pengganda (multiplier), di mana laju pertumbuhan ekonomi sangat ditentukan oleh rasio tabungan masyarakat dan rasio modal terhadap output (capital-output ratio / ICOR).<br><br>Implikasi kebijakan utama yang dapat ditarik dari model pertumbuhan ekonomi Harrod-Domar bagi negara berkembang adalah...",
-                pilihan: [
-                    "A. Negara harus membatasi masuknya investasi asing langsung demi melindungi pengusaha domestik tradisional.",
-                    "B. Peningkatan porsi tabungan nasional dan efisiensi penggunaan modal investasi merupakan syarat mutlak untuk mempercepat pertumbuhan output.",
-                    "C. Pemerintah harus menghapuskan seluruh bentuk sistem perbankan komersial dan menggantinya dengan barter terpusat.",
-                    "D. Pertumbuhan ekonomi hanya bergantung pada jumlah curah hujan dan kesuburan tanah alami tanpa butuh akumulasi modal.",
-                    "E. Kebijakan moneter kontraktif harus terus diterapkan secara permanen untuk menekan laju investasi swasta."
-                ],
-                kunci: "B"
-            },
-            {
-                id: 13,
-                soal: "Berbeda dengan mazhab Klasik atau model Harrod-Domar yang mengasumsikan proporsi penggunaan faktor produksi yang kaku, model pertumbuhan Neo-Klasik yang dikembangkan oleh Robert Solow dan Trevor Swan memperkenalkan fungsi produksi dengan asumsi fleksibilitas substitusi antara modal dan tenaga kerja serta berlakunya hukum hasil lebih yang semakin berkurang (diminishing returns) pada akumulasi modal fisik. Dalam model Solow-Swan jangka panjang, pertumbuhan ekonomi tanpa adanya kemajuan teknologi akan mencapai suatu titik keseimbangan mapan (steady state) di mana pertumbuhan pendapatan per kapita akan berhenti kecuali didorong oleh inovasi teknologi eksogen.<br><br>Faktor penentu utama pertumbuhan ekonomi jangka panjang dalam kerangka model Solow-Swan adalah...",
-                pilihan: [
-                    "A. Jumlah cadangan devisa hasil ekspor komoditas mentah non-migas.",
-                    "B. Tingkat pertumbuhan populasi absolut di daerah pedesaan.",
-                    "C. Kemajuan teknologi (technological progress) yang meningkatkan produktivitas total faktor (Total Factor Productivity).",
-                    "D. Besarnya proteksi tarif bea masuk yang diterapkan terhadap produk manufaktur impor.",
-                    "E. Jumlah tenaga kerja kasar yang tidak memiliki keahlian khusus di sektor informal."
-                ],
-                kunci: "C"
-            },
-            {
-                id: 14,
-                soal: "Dalam fase akhir dari rangkaian model pembangunan ekonomi historis menurut W.W. Rostow, struktur perekonomian suatu bangsa telah mencapai tingkat kematangan yang luar biasa. Sektor industri memegang dominasi penuh dengan teknologi yang sangat canggih, sebagian besar tenaga kerja telah beralih menjadi tenaga ahli dan pekerja kerah putih, serta pendapatan riil per kapita penduduk meningkat drastis. Pada tahap ini, perhatian masyarakat tidak lagi terpusat pada pemenuhan kebutuhan pokok dasar semata, melainkan beralih pada upaya memperluas jangkauan layanan kesejahteraan sosial, penyediaan barang-barang konsumsi tahan lama berkualitas tinggi secara massal, serta rekreasi.<br><br>Tahapan pertumbuhan ekonomi Rostow yang merujuk pada kondisi deskripsi di atas adalah...",
-                pilihan: [
-                    "A. The preconditions for take-off",
-                    "B. The take-off",
-                    "C. The drive to maturity",
-                    "D. The age of high mass-consumption",
-                    "E. The traditional society"
-                ],
-                kunci: "D"
-            },
-            {
                 id: 15,
-                soal: "Berbagai mazhab pemikiran ekonomi menawarkan sudut pandang yang beragam mengenai sumber utama kemajuan ekonomi suatu bangsa. Kaum Klasik menekankan spesialisasi dan akumulasi modal di bawah naungan pasar bebas; Joseph Schumpeter menyoroti peran sentral inovasi kreatif para wirausahawan; sementara teori pertumbuhan modern (Endogen dan Neo-Klasik) menempatkan akumulasi modal manusia (human capital), riset dan pengembangan (R&D), serta kemajuan teknologi sebagai determinan utama pertumbuhan ekonomi berkesinambungan.<br><br>Apabila dikaji dari perspektif teori pertumbuhan ekonomi modern endogen, faktor yang paling membedakan pendorong pertumbuhan ekonomi dibandingkan pandangan teori Klasik konvensional adalah penekanan pada...",
+                soal: "Paradigma pembangunan ekonomi global saat ini telah bergeser dari sekadar mengejar angka pertumbuhan PDB setinggi-tingginya menuju konsep pertumbuhan ekonomi yang berkelanjutan (sustainable economic growth). Konsep ini menegaskan bahwa meskipun pertumbuhan memberikan dampak positif berupa kenaikan pendapatan, perluasan kesempatan kerja, dan kemajuan inovasi, eksploitasi sumber daya alam secara berlebihan dan pencemaran lingkungan demi mengejar target output justru akan menghancurkan kapasitas produksi di masa depan. Oleh karena itu, efisiensi energi, mitigasi perubahan iklim, serta keadilan sosial menjadi bagian integral dari strategi perencanaan ekonomi modern.<br><br>Pernyataan berikut yang paling tepat mencerminkan esensi dari pertumbuhan ekonomi yang berkelanjutan (sustainable growth) adalah...",
                 pilihan: [
-                    "A. Kepemilikan mutlak tanah pertanian subur oleh kaum bangsawan feodal.",
-                    "B. Peran sentral pengetahuan, investasi sumber daya manusia, serta inovasi teknologi yang dapat menghasilkan limpahan manfaat (spillover effects).",
-                    "C. Kebijakan anggaran belanja negara yang mengalami defisit struktural secara terus-menerus.",
-                    "D. Pembatasan ketat mobilitas tenaga kerja lintas batas antarnegara berkembang.",
-                    "E. Penghapusan sistem hak kekayaan intelektual demi tercapainya kesetaraan sosial komunal."
+                    "A. Memacu eksploitasi hasil tambang dan hutan secara maksimal tanpa batas waktu demi melipatgandakan devisa negara saat ini.",
+                    "B. Menyeimbangkan antara pencapaian target ekspansi output ekonomi (PDB) dan inovasi dengan upaya pelestarian lingkungan hidup, pemerataan, serta keadilan antar-generasi.",
+                    "C. Menghentikan seluruh kegiatan industri manufaktur modern demi mengembalikan pola kehidupan masyarakat ke era agraris tradisional primitif.",
+                    "D. Menyerahkan pengelolaan sumber daya alam secara penuh kepada pasar bebas tanpa intervensi regulasi lingkungan dari pemerintah.",
+                    "E. Memfokuskan seluruh anggaran negara pada sektor konsumsi masyarakat perkotaan tanpa memperhatikan kelayakan ekosistem di pedesaan."
                 ],
                 kunci: "B"
             }
@@ -417,7 +470,7 @@
         // =====================================================
 
         let sedangUjian = false;
-        let namaSiswaAktif = "";
+        let dataSiswaAktif = {};
 
         function muatSoal() {
             const container = document.getElementById("questionsList");
@@ -448,10 +501,13 @@
 
         function mulaiUjian() {
             const nama = document.getElementById("namaSiswa").value.trim();
+            const kelasUtama = document.getElementById("kelasUtama").value;
+            const kelasEkonomi = document.getElementById("kelasEkonomi").value;
+            const noAbsen = document.getElementById("noAbsen").value.trim();
             const tokenInput = document.getElementById("tokenMasuk").value.trim();
 
-            if (!nama) {
-                alert("Harap isi Nama Lengkap terlebih dahulu!");
+            if (!nama || !kelasUtama || !kelasEkonomi || !noAbsen) {
+                alert("Harap isi nama, pilih kelas, dan nomor absen terlebih dahulu!");
                 return;
             }
             if (tokenInput !== TOKEN_MASUK_VALID) {
@@ -459,8 +515,15 @@
                 return;
             }
 
-            namaSiswaAktif = nama;
-            document.getElementById("displayNama").innerText = "Siswa: " + nama;
+            dataSiswaAktif = {
+                nama: nama,
+                kelasUtama: kelasUtama,
+                kelasEkonomi: kelasEkonomi,
+                noAbsen: noAbsen
+            };
+
+            document.getElementById("displayNama").innerText = nama;
+            document.getElementById("displayDetail").innerText = `Kelas: ${kelasUtama} | Kelas Ekonomi: ${kelasEkonomi} | No. Absen: ${noAbsen}`;
             
             muatSoal();
 
@@ -487,18 +550,18 @@
             const totalSoal = bankSoal.length;
             const nilaiAkhir = Math.round((benar / totalSoal) * 100);
 
-            sedangUjian = false; // Matikan deteksi kuncian
+            sedangUjian = false;
             
             document.getElementById("examContainer").style.display = "none";
             document.getElementById("resultContainer").style.display = "block";
             document.getElementById("scoreDisplay").innerText = nilaiAkhir;
-            document.getElementById("studentInfo").innerText = `Nama: ${namaSiswaAktif} | Benar: ${benar} dari ${totalSoal} Soal`;
+            document.getElementById("studentInfo").innerText = `${dataSiswaAktif.nama} (${dataSiswaAktif.kelasUtama} / ${dataSiswaAktif.kelasEkonomi} / Absen: ${dataSiswaAktif.noAbsen}) | Benar: ${benar} dari ${totalSoal} Soal`;
 
             // Kirim Data ke Google Sheets
-            kirimKeGoogleSheets(namaSiswaAktif, benar, totalSoal, nilaiAkhir);
+            kirimKeGoogleSheets(dataSiswaAktif, benar, totalSoal, nilaiAkhir);
         }
 
-        function kirimKeGoogleSheets(nama, benar, totalSoal, nilai) {
+        function kirimKeGoogleSheets(siswa, benar, totalSoal, nilai) {
             const statusElement = document.getElementById("statusPengiriman");
 
             if (!SCRIPT_URL || SCRIPT_URL === "TEMPEL_URL_APPS_SCRIPT_ANDA_DI_SINI") {
@@ -507,7 +570,10 @@
             }
 
             const payload = {
-                nama: nama,
+                nama: siswa.nama,
+                kelasUtama: siswa.kelasUtama,
+                kelasEkonomi: siswa.kelasEkonomi,
+                noAbsen: siswa.noAbsen,
                 benar: benar,
                 totalSoal: totalSoal,
                 nilai: nilai
