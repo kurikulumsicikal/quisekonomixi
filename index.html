@@ -80,10 +80,6 @@
         button:hover {
             background-color: #1557b0;
         }
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
 
         /* Tampilan Ujian */
         #examContainer {
@@ -197,10 +193,25 @@
     <div class="container" id="loginBox">
         <h2>PORTAL UJIAN CBT</h2>
         <p class="subtitle">Mata Pelajaran: Ekonomi | SMAN 1 Cikalongwetan</p>
-        
-        <div class="input-group">
-            <label>NAMA LENGKAP</label>
-            <input type="text" id="namaSiswa" placeholder="Masukkan nama lengkap" required>
+
+        <div class="form-row">
+            <div class="input-group">
+                <label>KELAS EKONOMI</label>
+                <select id="pilihKelas" required>
+                    <option value="" disabled selected>-- Pilih Kelas Ekonomi --</option>
+                    <option value="XI Ekonomi 1">XI Ekonomi 1</option>
+                    <option value="XI Ekonomi 2">XI Ekonomi 2</option>
+                    <option value="XI Ekonomi 3">XI Ekonomi 3</option>
+                    <option value="XI Ekonomi 4">XI Ekonomi 4</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>NAMA LENGKAP SISWA</label>
+                <select id="pilihNama" required>
+                    <option value="" disabled selected>-- Pilih Kelas Dahulu --</option>
+                </select>
+            </div>
         </div>
 
         <div class="form-row">
@@ -224,27 +235,14 @@
             </div>
 
             <div class="input-group">
-                <label>KELAS EKONOMI</label>
-                <select id="kelasEkonomi" required>
-                    <option value="" disabled selected>-- Pilih Kelas Ekonomi --</option>
-                    <option value="XI Ekonomi 1">XI Ekonomi 1</option>
-                    <option value="XI Ekonomi 2">XI Ekonomi 2</option>
-                    <option value="XI Ekonomi 3">XI Ekonomi 3</option>
-                    <option value="XI Ekonomi 4">XI Ekonomi 4</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="input-group">
                 <label>NO ABSEN</label>
                 <input type="number" id="noAbsen" placeholder="Contoh: 12" min="1" required>
             </div>
+        </div>
 
-            <div class="input-group">
-                <label>TOKEN MASUK UJIAN</label>
-                <input type="password" id="tokenMasuk" placeholder="Masukkan Token Ujian" required>
-            </div>
+        <div class="input-group">
+            <label>TOKEN MASUK UJIAN</label>
+            <input type="password" id="tokenMasuk" placeholder="Masukkan Token Ujian" required>
         </div>
 
         <button onclick="mulaiUjian()">MULAI UJIAN</button>
@@ -255,7 +253,7 @@
         <h3 id="displayNama" style="margin-bottom: 5px; color: #1a73e8;"></h3>
         <p id="displayDetail" style="margin-bottom: 15px; color: #5f6368; font-size: 14px;"></p>
         <hr style="margin-bottom: 20px;">
-        
+
         <form id="quizForm">
             <div id="questionsList"></div>
             <button type="button" id="btnKirim" onclick="selesaiUjian()">KIRIM JAWABAN</button>
@@ -279,7 +277,7 @@
     <div id="lockOverlay">
         <h1>UJIAN TERKUNCI!</h1>
         <p>Terdeteksi meninggalkan halaman ujian.<br>Silakan panggil <b>Pengawas</b> untuk membuka kuncian.</p>
-        
+
         <div class="pin-box">
             <label style="text-align: center; margin-bottom: 10px;">PIN PENGAWAS</label>
             <input type="password" id="pinPengawasInput" placeholder="****" maxlength="8">
@@ -287,208 +285,305 @@
         </div>
     </div>
 
+    <!-- SCRIPT APLIKASI UTAMA (DATA SISWA + SOAL + LOGIKA CBT) -->
     <script>
         // ==================== KONFIGURASI ====================
         const TOKEN_MASUK_VALID = "SMAN12026";
         const PIN_PENGAWAS = "123456";
-        
-        // Link Apps Script
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxWdHbi5lsCvEHL5J7vUENRRc7QxKrFdUuC9yK0POY-too34bSTlYEcki9gO7L0FJup/exec";
 
-        // BANK SOAL EKONOMI (15 SOAL REVISI)
+        // ==================== DATABASE NAMA SISWA ====================
+        const dataSiswaPerKelas = {
+            "XI Ekonomi 1": [
+                "ABDULLAH FIRDAUSYAWAL AL GHIFARI", "ADJENG RAHMAWATI", "ALIFAH ZULFA PUTRIA", "ANNIDA SHOLEHAH",
+                "APRILYANI", "AQTA DHARMA SATRIAJI", "ATHALLAH FAEZAL", "AULIA NUR SYAIFA", "AURA NUZULY SYIFA",
+                "CHALLISA SIFA RIZKYA EFENDI", "DECA PUTRI ROHMANTIANI", "DELIA RAHMA", "DISTY ASTRIDA",
+                "FADHIL HIKMATUL RAJAB", "FAOZA HILMIATY", "FIRDA DELIVIA AZZAHRA", "HAFNA ILMY MUHALLA",
+                "HANDIKA PURNAMA KENCANA", "KHUSIFA NUR'AISYAH", "KIRANI AZAHRA", "LAILI AMELIA",
+                "MAULIDA CINTA NURJANNAH", "MELINDA ANGGRAENI", "MOCH REVALD BAGASEGARA", "MOGIE JAYADINIA",
+                "MUHAMMAD RASYA ANWAR", "MUHAMMAD RAYYA ALFADIYAH", "NABILA AMALIA PURNAMA", "NAURA MUDARISATUL ULYA",
+                "NUR'SYIFA", "PEBIYANI", "PUJA SRI RAHAYU", "REFFY MIKAILA GUNAWAN", "RESIA LELIANA YOLANDA FITRI",
+                "REVA NURHALISA", "ROBBY FEBRIYAN", "S ZASYIRA NISYA'BANIA AZ-ZUKHRUF", "SALSABILA SAFAUTINA",
+                "SANDRA MANATAP ELISABET SILABAN", "SASKIANA AGUSTIN", "SHIFA NADIRA RAHMADANY", "SUSILAWATI",
+                "SYAHRA NUR AULIYA ZAHRA", "USI HASNA MARPUAH", "VINA SITI PATONAH"
+            ],
+            "XI Ekonomi 2": [
+                "AIRA RHAMADANI YUSUF", "ALYAA SITI NURKHALIFAH", "BARI RAI PERDANA", "BERLINO CHANIAGO",
+                "CITRA OLIVIA", "FIRDA AZZAHRA DAMIATI", "FISKA NAZKIA OKTALIZA", "GISELA PRIDJIANI ALDARA",
+                "INDIRA JULIA PUTRI", "JAWZA HUSNIYYAH KAMILLAH", "JENRIKO NAPITUPULU", "JUWITA MAULIA PUTRI",
+                "KEIRA CARISSA PUTRI BACHRI", "KEVIN KEANDRE WONG", "KEYLA MEYLANI", "LIANA ANJAR NURHASANAH",
+                "MIDA SEPTIANI", "MOCH DIMAS RADITYA", "MUHAMMAD DEFAN ALFATH", "MUHAMMAD SYAMIL ASYAUKI",
+                "NAILA NATASYA PUTRI", "NAZWA DWI CLARESTA", "NAZWA RIZMAWANTI", "PUTRI SAFIRA RAHMAWANTI",
+                "REISHA PUTRI RAMADHANI", "REZA ADIE SAPUTRA", "RISKA PADJRIAH TRISNAWATI", "RISWANDI", "SALFA",
+                "SANIA RAMADANI", "SHALIKA NUR AWALYA", "SILKI SYAMSIAH", "SILPI KAILA", "SITI ANING NURMALA",
+                "SITI PATIMATUZZAHRO", "SITI SALBIAH", "SOFIATUL BADRIYAH", "SUCI ARYANTI", "SYAHDA KIRANIA AURELIA DEWANI",
+                "TENI ANIDA FITRIANI", "ULFAH AWALIAH", "VANI APRILIA", "VANIA DWINA SASKARA", "ZAHRA REKA SALWA",
+                "ZAIDAN SYAMIL AL-AZMI"
+            ],
+            "XI Ekonomi 3": [
+                "AGNIA QORIATU RIZKA", "AJMA AULAL YUSUF", "ANDINI", "ANNISA ZAHRANI PUTRI", "AUFA SACBANIA ISMAIL",
+                "DEVI NUR ROHMAH", "DEVY JULIANTI", "EUIS NURHASANAH", "FAHMI NURFASYA", "INGGIT NURAENI",
+                "KALILA MAHARANI", "KARIMA NUR TARINA MEILIN", "KAYLA NEZHA MEILANI", "KHANSA NABILAH",
+                "KIRANA AMALLA WIDIANI", "M ARMIYA AZMI AZZAURI", "MARSANTY NURHAPIPAH", "MUHAMAD RIZKI RESA AKBAR",
+                "MUHAMMAD RASYA ARDIVA", "NABILA FEBRIANI PUTRI", "NENG SUSI", "NEYSA PUJI LESTARI", "NOVAL ADHA",
+                "PUTRI AULIA DEWIANTI", "QUEENYTA ALIKA ALHAFIDZ", "RAFA KEIYSHA PUTRI ANDRIYANA", "REGA AMELIA",
+                "REGINA QUEEN ELLIBESTNA TAMBUNAN", "RISTA FEBRIYANTI MAULIDA", "RIZKI ADRIAN", "RYANI SYALAVIAH",
+                "SELDA AWALIA ZULFA", "SHAFANA NURFADILAH", "SIDIK SAPUTRA", "SITI KHOIRIAH", "SITI ZULFA UMAYAH",
+                "SYAFA ADAWIAH", "SYAHRIL MUHAMAD RIZQI", "VENITA TRI ANJANI", "VIA ZASKIA", "WAFIQ MUFNI NURUL AZMI",
+                "WANDA PRASETYO", "WINDY AULIA", "ZAKYA RAHMAH FADILAH", "ZULFA RAMADAN"
+            ],
+            "XI Ekonomi 4": [
+                "A. ROJAK", "ALISYA ANKA SADIYA", "ALYA FITRIANI", "ASYIEFHA NABILA INAYA PUTRI",
+                "AZZAHRAH IMTIYAZ SYAUQI", "BENING AYUNINGTYAS RAMADHAN", "DEZAN FARRAS ARSENO", "DINAN A'DLAN",
+                "DYNARA SYAFIRA AHYEN", "ELVANI KEYSA APRILANA", "FAZWAH FAUZIAH", "FITRI AYU GALIH LESTARI",
+                "HAGSA HELWA", "INA HIKMAWATI", "INTAN NURUSSILMI ARRAHMA", "JUNITA AGUSTINA", "KAYZAN RADITYA ALGHIFARI",
+                "KHAIRUNNISA SALSABILA", "LASYA AUTHEA SOFYAN", "LINTANG PUTRI ARUM LARASATI", "LULU EVELYNA HARVANI",
+                "LUTHFI AL HAKIM", "M. AZUAN SYACHRIL AKBAR", "MILA NURHASANAH", "MUHAMMAD FACHRI ARRASYID",
+                "MUHAMMAD RAFKHA RAMDHANI", "NAZWA ALIFYA ANDRIANI", "NINDY ANGGRAENY", "NUR QORITA AYUN",
+                "OKTAVIA LESTARI", "PUTRI AMANDA SETIA ZAHRA", "RAFKA ABDULRAHMAN PRATAMA", "RAISA LISNAWATI",
+                "REYHAN SENJA PRATAMA", "RISMA RAMADHANI", "SALWA YANTI NABILAH", "SANDI MUHAMAD TOZIRI",
+                "SARI RAHMAWATI", "SHABILLA NUR SYIFA", "SRI SHINTYA SARI", "SYIFA NUR FAUZI", "SYIFA ZARI ANINDITYA"
+            ]
+        };
+
+        // ==================== BANK SOAL EKONOMI ====================
         const bankSoal = [
             {
                 id: 1,
                 soal: "Pertumbuhan ekonomi yang ditandai dengan bertambahnya kapasitas produksi barang dan jasa secara agregat memberikan dampak positif langsung bagi struktur ketenagakerjaan suatu negara. Ekspansi sektor-sektor usaha, industri, dan perdagangan tidak hanya menaikkan total pendapatan negara serta rata-rata pendapatan penduduknya, tetapi juga membuka lebih banyak lowongan kerja baru yang secara efektif mampu menyerap angkatan kerja serta menekan angka pengangguran terbuka di perkotaan maupun perdesaan.<br><br>Berdasarkan fenomena tersebut, mekanisme utama bagaimana pertumbuhan ekonomi mampu mengurangi pengangguran adalah...",
                 pilihan: [
-                    "A. Peningkatan kapasitas produksi menuntut penambahan input tenaga kerja melalui ekspansi dunia usaha dan pembukaan lapangan kerja baru.",
-                    "B. Pemerintah mewajibkan seluruh perusahaan swasta untuk melakukan pemutusan hubungan kerja demi efisiensi biaya.",
-                    "C. Kenaikan PDB riil secara otomatis menghentikan seluruh aktivitas mekanisasi pabrik dan kembali ke sistem manual.",
-                    "D. Peningkatan ekspor barang mentah memicu perpindahan massal penduduk ke sektor pertanian subsisten.",
-                    "E. Lonjakan investasi asing langsung dialokasikan sepenuhnya untuk pembelian instrumen surat berharga jangka pendek."
+                    "Peningkatan kapasitas produksi menuntut penambahan input tenaga kerja melalui ekspansi dunia usaha dan pembukaan lapangan kerja baru.",
+                    "Pemerintah mewajibkan seluruh perusahaan swasta untuk melakukan pemutusan hubungan kerja demi efisiensi biaya.",
+                    "Kenaikan PDB riil secara otomatis menghentikan seluruh aktivitas mekanisasi pabrik dan kembali ke sistem manual.",
+                    "Peningkatan ekspor barang mentah memicu perpindahan massal penduduk ke sektor pertanian subsisten.",
+                    "Lonjakan investasi asing langsung dialokasikan fully untuk pembelian instrumen surat berharga jangka pendek."
                 ],
-                kunci: "A"
+                kunciIndex: 0
             },
             {
                 id: 2,
                 soal: "Pemerintah pusat suatu kawasan regional merilis data Produk Domestik Bruto (PDB) atas dasar harga konstan guna mengukur kinerja makroekonomi secara riil tanpa terdistorsi oleh faktor inflasi. PDB riil wilayah tersebut pada tahun 2024 tercatat sebesar Rp1.200 triliun. Seiring dengan pulihnya sektor investasi global dan peningkatan produktivitas industri manufaktur lokal, PDB riil wilayah tersebut mengalami akselerasi dan meningkat menjadi Rp1.296 triliun pada akhir tahun 2025. Tim perencana ekonomi daerah ditugaskan untuk menghitung tingkat dinamika ekspansi output agregat tersebut guna mengevaluasi pencapaian target Rencana Pembangunan Jangka Menengah Daerah (RPJMD).<br><br>Berdasarkan data tersebut, laju pertumbuhan ekonomi wilayah itu pada tahun 2025 adalah...",
                 pilihan: [
-                    "A. 6,5%",
-                    "B. 7,0%",
-                    "C. 7,5%",
-                    "D. 8,0%",
-                    "E. 8,5%"
+                    "6,5%",
+                    "7,0%",
+                    "7,5%",
+                    "8,0%",
+                    "8,5%"
                 ],
-                kunci: "D"
+                kunciIndex: 3
             },
             {
                 id: 3,
                 soal: "Meskipun secara nasional angka Produk Domestik Bruto (PDB) suatu negara menunjukkan tren kenaikan yang sangat impresif, pertumbuhan tersebut terkadang tidak terdistribusi secara merata di seluruh lapisan masyarakat maupun wilayah geografis. Pertumbuhan yang cenderung terkonsentrasi di kota-kota besar atau dinikmati oleh kelompok pemilik modal tertentu saja justru dapat memperlebar jurang pemisah antara golongan masyarakat berpendapatan tinggi dan golongan berpendapatan rendah, memicu kecemburuan sosial, serta menghambat pemerataan hasil pembangunan.<br><br>Risiko negatif yang timbul apabila pertumbuhan ekonomi tidak disertai dengan kebijakan distribusi pendapatan yang merata adalah...",
                 pilihan: [
-                    "A. Terjadinya pemerataan kesejahteraan secara otomatis di seluruh pelosok perdesaan.",
-                    "B. Lonjakan tajam kesenjangan sosial serta melebarnya jurang pemisah antara si kaya dan si miskin.",
-                    "C. Penurunan tingkat inflasi secara permanen di seluruh sektor perdagangan ritel.",
-                    "D. Penghentian total segala bentuk kegiatan investasi swasta di kawasan perkotaan.",
-                    "E. Peningkatan drastis cadangan devisa negara hasil ekspor barang modal."
+                    "Terjadinya pemerataan kesejahteraan secara otomatis di seluruh pelosok perdesaan.",
+                    "Lonjakan tajam kesenjangan sosial serta melebarnya jurang pemisah antara si kaya dan si miskin.",
+                    "Penurunan tingkat inflasi secara permanen di seluruh sektor perdagangan ritel.",
+                    "Penghentian total segala bentuk kegiatan investasi swasta di kawasan perkotaan.",
+                    "Peningkatan drastis cadangan devisa negara hasil ekspor barang modal."
                 ],
-                kunci: "B"
+                kunciIndex: 1
             },
             {
                 id: 4,
                 soal: "Negara \"Makmur Sejahtera\" mencatatkan data makroekonomi pada akhir tahun anggaran 2025 dalam satuan miliar rupiah sebagai berikut: Produk Domestik Bruto (PDB) tercatat sebesar Rp950.000, pendapatan faktor produksi warga negara di luar negeri sebesar Rp45.000, dan pendapatan faktor produksi warga negara asing di dalam negeri sebesar Rp20.000. Penyusutan barang modal dan penggantian tercatat Rp35.000, pajak tidak langsung sebesar Rp25.000, serta subsidi pemerintah yang diberikan sebesar Rp10.000. Komponen dari laba bersih yang dialokasikan meliputi laba ditahan Rp15.000, pajak perseroan Rp12.000, dan iuran jaminan sosial/asuransi Rp8.000. Pemerintah juga mendistribusikan pembayaran transfer (transfer payment) kepada masyarakat sebesar Rp18.000, sementara pajak langsung yang wajib dibayar oleh penduduk tercatat sebesar Rp30.000.<br><br>Berdasarkan data komprehensif tersebut, besarnya Disposable Income (DI) negara \"Makmur Sejahtera\" adalah...",
                 pilihan: [
-                    "A. Rp838.000 miliar",
-                    "B. Rp858.000 miliar",
-                    "C. Rp868.000 miliar",
-                    "D. Rp888.000 miliar",
-                    "E. Rp918.000 miliar"
+                    "Rp838.000 miliar",
+                    "Rp858.000 miliar",
+                    "Rp868.000 miliar",
+                    "Rp888.000 miliar",
+                    "Rp918.000 miliar"
                 ],
-                kunci: "C"
+                kunciIndex: 2
             },
             {
                 id: 5,
                 soal: "Salah satu indikator keberhasilan suatu negara dalam mencatatkan pertumbuhan ekonomi yang tinggi adalah tercapainya peningkatan daya beli masyarakat. Dengan bertambahnya pendapatan yang diterima penduduk, masyarakat menjadi lebih leluasa mengakses fasilitas kesehatan yang memadai, mutu pendidikan yang lebih baik, serta infrastruktur publik yang layak. Kondisi ini pada akhirnya bermuara pada peningkatan kualitas hidup secara keseluruhan dan penurunan angka kemiskinan absolut di berbagai wilayah.<br><br>Implikasi positif dari pertumbuhan ekonomi terhadap taraf hidup masyarakat tercermin melalui...",
                 pilihan: [
-                    "A. Penurunan kemampuan masyarakat dalam memenuhi kebutuhan pokok akibat lonjakan harga barang.",
-                    "B. Peningkatan akses terhadap fasilitas kesehatan, pendidikan, dan infrastruktur yang lebih layak berkat naiknya daya beli.",
-                    "C. Pembatasan akses layanan publik secara ketat hanya bagi golongan masyarakat berpendapatan tinggi.",
-                    "D. Penghapusan seluruh bentuk lembaga keuangan formal yang melayani kredit mikro masyarakat.",
-                    "E. Penurunan rata-rata angka harapan hidup penduduk akibat tingginya intensitas jam kerja industri."
+                    "Penurunan kemampuan masyarakat dalam memenuhi kebutuhan pokok akibat lonjakan harga barang.",
+                    "Peningkatan akses terhadap fasilitas kesehatan, pendidikan, dan infrastruktur yang lebih layak berkat naiknya daya beli.",
+                    "Pembatasan akses layanan publik secara ketat hanya bagi golongan masyarakat berpendapatan tinggi.",
+                    "Penghapusan seluruh bentuk lembaga keuangan formal yang melayani kredit mikro masyarakat.",
+                    "Penurunan rata-rata angka harapan hidup penduduk akibat tingginya intensitas jam kerja industri."
                 ],
-                kunci: "B"
+                kunciIndex: 1
             },
             {
                 id: 6,
                 soal: "Dalam seminar pembangunan nasional, para ekonom sering kali mendiskusikan indikator keberhasilan kemajuan suatu negara. Sebagian pihak berpendapat bahwa fokus utama negara adalah mengejar angka pertumbuhan PDB yang tinggi setiap tahunnya. Namun, pihak lain menekankan bahwa tingginya pertumbuhan PDB tidak ada artinya jika kemiskinan massal, ketimpangan distribusi pendapatan, kerusakan lingkungan, serta rendahnya kualitas pendidikan dan kesehatan masyarakat tidak kunjung terselesaikan secara menyeluruh.<br><br>Pernyataan di bawah ini yang paling tepat membedakan hakikat antara pertumbuhan ekonomi dan pembangunan ekonomi adalah...",
                 pilihan: [
-                    "A. Pertumbuhan ekonomi menitikberatkan pada perluasan kesempatan kerja dan pemerataan pendapatan semata, sedangkan pembangunan ekonomi murni menghitung akumulasi modal fisik.",
-                    "B. Pertumbuhan ekonomi merupakan proses peningkatan output fisik secara kuantitatif, sedangkan pembangunan ekonomi mencakup perubahan kualitatif, kelembagaan, pemerataan kesejahteraan, serta keadilan sosial secara luas.",
-                    "C. Pertumbuhan ekonomi hanya terjadi di negara maju, sedangkan pembangunan ekonomi hanya dapat dilakukan oleh negara berkembang melalui pinjaman luar negeri.",
-                    "D. Pertumbuhan ekonomi mengabaikan sektor industri modern, sementara pembangunan ekonomi menolak modernisasi sektor pertanian tradisional.",
-                    "E. Pertumbuhan ekonomi dan pembangunan ekonomi adalah dua istilah mutlak yang memiliki arti, metode hitung, dan tujuan akhir yang sepenuhnya identik."
+                    "Pertumbuhan ekonomi menitikberatkan pada perluasan kesempatan kerja dan pemerataan pendapatan semata, sedangkan pembangunan ekonomi murni menghitung akumulasi modal fisik.",
+                    "Pertumbuhan ekonomi merupakan proses peningkatan output fisik secara kuantitatif, sedangkan pembangunan ekonomi mencakup perubahan kualitatif, kelembagaan, pemerataan kesejahteraan, serta keadilan sosial secara luas.",
+                    "Pertumbuhan ekonomi hanya terjadi di negara maju, sedangkan pembangunan ekonomi hanya dapat dilakukan oleh negara berkembang melalui pinjaman luar negeri.",
+                    "Pertumbuhan ekonomi mengabaikan sektor industri modern, sementara pembangunan ekonomi menolak modernisasi sektor pertanian tradisional.",
+                    "Pertumbuhan ekonomi dan pembangunan ekonomi adalah dua istilah mutlak yang memiliki arti, metode hitung, dan tujuan akhir yang sepenuhnya identik."
                 ],
-                kunci: "B"
+                kunciIndex: 1
             },
             {
                 id: 7,
                 soal: "Dalam upaya mengejar target pertumbuhan output ekonomi yang tinggi dan instan, sektor industri ekstraktif dan manufaktur sering kali mengabaikan aspek kelestarian ekologis. Eksploitasi sumber daya alam secara berlebihan, pembukaan lahan hutan secara masif untuk perkebunan monokultur, serta pembuangan limbah produksi yang tidak terkontrol memicu kerusakan lingkungan hidup yang parah, pencemaran air dan udara, serta ancaman krisis iklim jangka panjang yang justru merugikan kelangsungan hidup generasi masa depan.<br><br>Dampak negatif dari pertumbuhan ekonomi yang tidak berwawasan lingkungan terhadap keberlanjutan pembangunan adalah...",
                 pilihan: [
-                    "A. Peningkatan kesuburan tanah secara alami di kawasan daerah aliran sungai.",
-                    "B. Terjadinya kerusakan alam, pencemaran lingkungan, serta eksploitasi sumber daya secara berlebihan demi mengejar target output.",
-                    "C. Penurunan suhu global secara drastis akibat berkurangnya emisi gas rumah kaca pabrik.",
-                    "D. Peningkatan cadangan sumber daya alam tak terbarukan secara berlipat ganda.",
-                    "E. Hilangnya seluruh hambatan birokrasi dalam perizinan pendirian kawasan industri berat."
+                    "Peningkatan kesuburan tanah secara alami di kawasan daerah aliran sungai.",
+                    "Terjadinya kerusakan alam, pencemaran lingkungan, serta eksploitasi sumber daya secara berlebihan demi mengejar target output.",
+                    "Penurunan suhu global secara drastis akibat berkurangnya emisi gas rumah kaca pabrik.",
+                    "Peningkatan cadangan sumber daya alam tak terbarukan secara berlipat ganda.",
+                    "Hilangnya seluruh hambatan birokrasi dalam perizinan pendirian kawasan industri berat."
                 ],
-                kunci: "B"
+                kunciIndex: 1
             },
             {
                 id: 8,
                 soal: "Badan Pusat Statistik (BPS) sebuah negara berkembang menerbitkan data resmi terkait struktur perekonomian domestik dan demografi penduduk pada tahun 2025. Diketahui Produk Nasional Bruto (PNB) negara tersebut bernilai Rp750.000.000.000.000,00 (tujuh ratus lima puluh triliun rupiah). Total nilai penyusutan atas barang-barang modal selama proses produksi berjalan dalam tahun tersebut mencapai Rp50.000.000.000.000,00, serta besarnya pajak tidak langsung netto yang dipungut pemerintah tercatat sebesar Rp30.000.000.000.000,00. Berdasarkan hasil sensus penduduk mutakhir pertengahan tahun 2025, jumlah total penduduk di negara tersebut tercatat sebanyak 200 juta jiwa.<br><br>Berdasarkan data di atas, besarnya tingkat Pendapatan Per Kapita negara tersebut berdasarkan Pendapatan Nasional Neto (NNI) adalah...",
                 pilihan: [
-                    "A. Rp3.250.000,00 per jiwa",
-                    "B. Rp3.450.000,00 per jiwa",
-                    "C. Rp3.650.000,00 per jiwa",
-                    "D. Rp3.850.000,00 per jiwa",
-                    "E. Rp4.000.000,00 per jiwa"
+                    "Rp3.250.000,00 per jiwa",
+                    "Rp3.450.000,00 per jiwa",
+                    "Rp3.650.000,00 per jiwa",
+                    "Rp3.850.000,00 per jiwa",
+                    "Rp4.000.000,00 per jiwa"
                 ],
-                kunci: "C"
+                kunciIndex: 2
             },
             {
                 id: 9,
                 soal: "Dalam sejarah pemikiran ekonomi, berbagai mazhab mencoba menjelaskan motor penggerak dinamika pertumbuhan ekonomi. Mazhab Klasik yang dimotori oleh Adam Smith melihat spesialisasi tenaga kerja dan perluasan pasar sebagai penggerak utama kekayaan bangsa. Di sisi lain, ekonom Joseph Schumpeter menawarkan perspektif yang berbeda dengan menekankan bahwa pertumbuhan ekonomi kapitalis digerakkan oleh inovasi radikal dan fenomena \"pembongkaran kreatif\" (creative destruction) yang dipelopori oleh para wirausahawan (entrepreneurs), yang sekaligus memacu investasi dan efisiensi produksi.<br><br>Berdasarkan perbandingan kedua pandangan tersebut, persamaan prinsip fundamental antara teori Klasik dan teori Schumpeter dalam memandang pertumbuhan ekonomi adalah...",
                 pilihan: [
-                    "A. Keduanya menganggap bahwa pertumbuhan ekonomi dikendalikan secara mutlak oleh perencanaan terpusat pemerintah pusat.",
-                    "B. Keduanya memandang pertumbuhan ekonomi sebagai proses dinamis yang digerakkan oleh inisiatif pelaku ekonomi swasta dalam meningkatkan produktivitas, inovasi, dan efisiensi produksi.",
-                    "C. Keduanya sepakat bahwa pertumbuhan ekonomi jangka panjang pasti akan berakhir pada titik stasioner akibat keterbatasan lahan pertanian.",
-                    "D. Keduanya menolak segala bentuk akumulasi modal dan adopsi mesin-mesin modern dalam proses produksi industri.",
-                    "E. Keduanya menyatakan bahwa upah buruh harus ditekan pada tingkat subsisten mutlak secara permanen."
+                    "Keduanya menganggap bahwa pertumbuhan ekonomi dikendalikan secara mutlak oleh perencanaan terpusat pemerintah pusat.",
+                    "Keduanya memandang pertumbuhan ekonomi sebagai proses dinamis yang digerakkan oleh inisiatif pelaku ekonomi swasta dalam meningkatkan produktivitas, inovasi, dan efisiensi produksi.",
+                    "Keduanya sepakat bahwa pertumbuhan ekonomi jangka panjang pasti akan berakhir pada titik stasioner akibat keterbatasan lahan pertanian.",
+                    "Keduanya menolak segala bentuk akumulasi modal dan adopsi mesin-mesin modern dalam proses produksi industri.",
+                    "Keduanya menyatakan bahwa upah buruh harus ditekan pada tingkat subsisten mutlak secara permanen."
                 ],
-                kunci: "B"
+                kunciIndex: 1
             },
             {
                 id: 10,
                 soal: "Pertumbuhan ekonomi yang terlalu cepat terkadang dapat memicu ketidakseimbangan struktural antara sisi permintaan agregat (aggregate demand) dan sisi penawaran agregat (aggregate supply). Ketika daya beli masyarakat melonjak tajam akibat ekspansi kredit dan kenaikan pendapatan, sementara kapasitas produksi dunia usaha belum mampu mengimbangi lonjakan permintaan tersebut secara cepat, maka kelangkaan barang dan jasa di pasar domestik tidak dapat dihindarkan, yang pada akhirnya memicu kenaikan harga-harga secara umum.<br><br>Fenomena tantangan ekonomi yang digambarkan dalam narasi tersebut dikenal sebagai...",
                 pilihan: [
-                    "A. Deflasi struktural berkepanjangan",
-                    "B. Tekanan inflasi akibat kelebihan permintaan (demand-pull inflation)",
-                    "C. Krisis pengangguran teknologi",
-                    "D. Surplus neraca pembayaran internasional",
-                    "E. Apresiasi nilai tukar mata uang domestik secara drastis"
+                    "Deflasi struktural berkepanjangan",
+                    "Tekanan inflasi akibat kelebihan permintaan (demand-pull inflation)",
+                    "Krisis pengangguran teknologi",
+                    "Surplus neraca pembayaran internasional",
+                    "Apresiasi nilai tukar mata uang domestik secara drastis"
                 ],
-                kunci: "B"
+                kunciIndex: 1
             },
             {
                 id: 11,
                 soal: "Dalam buku klasik The Stages of Economic Growth karya W.W. Rostow, proses pembangunan ekonomi suatu bangsa dijelaskan melalui lima tahapan linier. Salah satu fase krusial dalam teori ini adalah fase \"tinggal landas\" (the take-off), di mana hambatan-hambatan tradisional terhadap pertumbuhan ekonomi berhasil dihancurkan, tingkat investasi produktif melonjak melampaui 10% dari Pendapatan Nasional, dan sektor-sektor industri pelopor baru tumbuh secara eksponensial sehingga memicu ekspansi ekonomi yang bersifat mandiri (self-sustained growth).<br><br>Kondisi empiris yang paling mencerminkan suatu negara sedang berada pada fase \"tinggal landas\" (take-off) menurut Rostow adalah...",
                 pilihan: [
-                    "A. Perekonomian masih didominasi oleh kegiatan pertanian subsisten tradisional dengan penggunaan teknologi purba dan produktivitas sangat rendah.",
-                    "B. Masyarakat sudah mencapai era konsumsi massal tinggi dengan kepemilikan barang-barang mewah dan jasa rekreasi yang melimpah.",
-                    "C. Terjadi transformasi struktural yang ditandai oleh lonjakan investasi domestik, tumbuhnya industri manufaktur modern, dan ekspansi ekonomi yang berkelanjutan.",
-                    "D. Struktur ekonomi mengalami kemandekan total karena ketiadaan kaum wirausahawan dan minimnya infrastruktur transportasi.",
-                    "E. Seluruh kegiatan ekonomi dikelola secara komunal tanpa mengenal sistem pasar bebas maupun spesialisasi kerja."
+                    "Perekonomian masih didominasi oleh kegiatan pertanian subsisten tradisional dengan penggunaan teknologi purba dan produktivitas sangat rendah.",
+                    "Masyarakat sudah mencapai era konsumsi massal tinggi dengan kepemilikan barang-barang mewah dan jasa rekreasi yang melimpah.",
+                    "Terjadi transformasi struktural yang ditandai oleh lonjakan investasi domestik, tumbuhnya industri manufaktur modern, dan ekspansi ekonomi yang berkelanjutan.",
+                    "Struktur ekonomi mengalami kemandekan total karena ketiadaan kaum wirausahawan dan minimnya infrastruktur transportasi.",
+                    "Seluruh kegiatan ekonomi dikelola secara komunal tanpa mengenal sistem pasar bebas maupun spesialisasi kerja."
                 ],
-                kunci: "C"
+                kunciIndex: 2
             },
             {
                 id: 12,
                 soal: "Dalam dokumen laporan perekonomian nasional Negara \"Adikarya\" periode 2025, diperoleh data statistik pendapatan nasional yang menunjukkan nilai Pendapatan Nasional Neto (NNI) sebesar Rp1.450.000 miliar. Dalam sistem perpajakan dan alokasi keuntungan perusahaan di negara tersebut, tercatat bahwa dana pensiun dan iuran asuransi yang ditarik dari tenaga kerja mencapai Rp35.000 miliar, laba perusahaan yang sengaja tidak dibagikan kepada pemegang saham (laba ditahan) sebesar Rp45.000 miliar, serta besaran pajak atas laba perusahaan (pajak perseroan) sebesar Rp25.000 miliar. Di sisi lain, pemerintah menyalurkan dana bantuan sosial dan subsidi bagi hasil dalam bentuk transfer payment senilai Rp50.000 miliar. Sepanjang tahun tersebut, warga negara juga dikenakan kewajiban membayar pajak penghasilan langsung kepada kas negara sebesar Rp60.000 miliar.<br><br>Berdasarkan data keuangan tersebut, besarnya Disposable Income (DI) yang siap dibelanjakan oleh masyarakat Negara \"Adikarya\" adalah...",
                 pilihan: [
-                    "A. Rp1.325.000 miliar",
-                    "B. Rp1.355.000 miliar",
-                    "C. Rp1.385.000 miliar",
-                    "D. Rp1.415.000 miliar",
-                    "E. Rp1.445.000 miliar"
+                    "Rp1.325.000 miliar",
+                    "Rp1.355.000 miliar",
+                    "Rp1.385.000 miliar",
+                    "Rp1.415.000 miliar",
+                    "Rp1.445.000 miliar"
                 ],
-                kunci: "A"
+                kunciIndex: 0
             },
             {
                 id: 13,
                 soal: "Dalam literatur makroekonomi modern, terdapat dua model penting yang menganalisis hubungan antara investasi, modal, dan laju pertumbuhan ekonomi jangka panjang. Model Harrod-Domar menekankan bahwa pertumbuhan ekonomi sangat bergantung pada rasio tabungan dan rasio modal-output (ICOR), serta mengasumsikan proporsi produksi yang kaku. Sementara itu, model pertumbuhan Neo-Klasik (Solow-Swan) memperbaiki kelemahan tersebut dengan memasukkan asumsi fleksibilitas substitusi faktor produksi serta konsep diminishing returns pada modal fisik, yang menyimpulkan bahwa pertumbuhan jangka panjang tanpa inovasi teknologi dan efisiensi akan mencapai titik keseimbangan mantap (steady state).<br><br>Implikasi kebijakan ekonomi praktis yang membedakan fokus utama antara model Harrod-Domar dan model Solow-Swan bagi negara berkembang adalah...",
                 pilihan: [
-                    "A. Harrod-Domar berfokus pada pentingnya mobilisasi tabungan dan akumulasi investasi fisik untuk mencegah pengangguran kapasitas, sedangkan Solow-Swan menekankan pentingnya kemajuan teknologi, inovasi, dan produktivitas jangka panjang.",
-                    "B. Harrod-Domar melarang adanya investasi asing langsung, sementara Solow-Swan mewajibkan penutupan total sistem perbankan domestik.",
-                    "C. Harrod-Domar menyatakan pertumbuhan ekonomi tidak dipengaruhi oleh besarnya tabungan masyarakat sama sekali.",
-                    "D. Solow-Swan mengabaikan peranan tenaga kerja dan hanya berfokus pada jumlah luas lahan pertanian.",
-                    "E. Keduanya sepakat bahwa pertumbuhan ekonomi hanya ditentukan oleh faktor cuaca dan kesuburan tanah alami."
+                    "Harrod-Domar berfokus pada pentingnya mobilisasi tabungan dan akumulasi investasi fisik untuk mencegah pengangguran kapasitas, sedangkan Solow-Swan menekankan pentingnya kemajuan teknologi, inovasi, dan produktivitas jangka panjang.",
+                    "Harrod-Domar melarang adanya investasi asing langsung, sementara Solow-Swan mewajibkan penutupan total sistem perbankan domestik.",
+                    "Harrod-Domar menyatakan pertumbuhan ekonomi tidak dipengaruhi oleh besarnya tabungan masyarakat sama sekali.",
+                    "Solow-Swan mengabaikan peranan tenaga kerja dan hanya berfokus pada jumlah luas lahan pertanian.",
+                    "Keduanya sepakat bahwa pertumbuhan ekonomi hanya ditentukan oleh faktor cuaca dan kesuburan tanah alami."
                 ],
-                kunci: "A"
+                kunciIndex: 0
             },
             {
                 id: 14,
                 soal: "Laporan tahunan bank sentral sebuah negara berkembang menunjukkan adanya fluktuasi siklus bisnis dalam tiga tahun terakhir akibat dinamika rantai pasok global. Pada tahun 2023, Produk Domestik Bruto (PDB) riil negara tersebut berada pada angka Rp2.500 triliun. Memasuki tahun 2024, terjadi perlambatan ekonomi yang menyebabkan PDB riil terkoreksi tipis atau tumbuh secara moderat sehingga mencapai Rp2.600 triliun. Selanjutnya, pada tahun 2025, perekonomian kembali mencatatkan pertumbuhan yang lebih kuat dengan nilai PDB riil melonjak menjadi Rp2.782 triliun.<br><br>Berdasarkan data runtun waktu (time series) tersebut, berapa besar laju pertumbuhan ekonomi negara tersebut pada tahun 2025 jika dibandingkan dengan tahun 2024?",
                 pilihan: [
-                    "A. 7,0%",
-                    "B. 6,0%",
-                    "C. 6,5%",
-                    "D. 5,5%",
-                    "E. 7,5%"
+                    "7,0%",
+                    "6,0%",
+                    "6,5%",
+                    "5,5%",
+                    "7,5%"
                 ],
-                kunci: "A"
+                kunciIndex: 0
             },
             {
                 id: 15,
                 soal: "Paradigma pembangunan ekonomi global saat ini telah bergeser dari sekadar mengejar angka pertumbuhan PDB setinggi-tingginya menuju konsep pertumbuhan ekonomi yang berkelanjutan (sustainable economic growth). Konsep ini menegaskan bahwa meskipun pertumbuhan memberikan dampak positif berupa kenaikan pendapatan, perluasan kesempatan kerja, dan kemajuan inovasi, eksploitasi sumber daya alam secara berlebihan dan pencemaran lingkungan demi mengejar target output justru akan menghancurkan kapasitas produksi di masa depan. Oleh karena itu, efisiensi energi, mitigasi perubahan iklim, serta keadilan sosial menjadi bagian integral dari strategi perencanaan ekonomi modern.<br><br>Pernyataan berikut yang paling tepat mencerminkan esensi dari pertumbuhan ekonomi yang berkelanjutan (sustainable growth) adalah...",
                 pilihan: [
-                    "A. Memacu eksploitasi hasil tambang dan hutan secara maksimal tanpa batas waktu demi melipatgandakan devisa negara saat ini.",
-                    "B. Menyeimbangkan antara pencapaian target ekspansi output ekonomi (PDB) dan inovasi dengan upaya pelestarian lingkungan hidup, pemerataan, serta keadilan antar-generasi.",
-                    "C. Menghentikan seluruh kegiatan industri manufaktur modern demi mengembalikan pola kehidupan masyarakat ke era agraris tradisional primitif.",
-                    "D. Menyerahkan pengelolaan sumber daya alam secara penuh kepada pasar bebas tanpa intervensi regulasi lingkungan dari pemerintah.",
-                    "E. Memfokuskan seluruh anggaran negara pada sektor konsumsi masyarakat perkotaan tanpa memperhatikan kelayakan ekosistem di pedesaan."
+                    "Memacu eksploitasi hasil tambang dan hutan secara maksimal tanpa batas waktu demi melipatgandakan devisa negara saat ini.",
+                    "Menyeimbangkan antara pencapaian target ekspansi output ekonomi (PDB) dan inovasi dengan upaya pelestarian lingkungan hidup, pemerataan, serta keadilan antar-generasi.",
+                    "Menghentikan seluruh kegiatan industri manufaktur modern demi mengembalikan pola kehidupan masyarakat ke era agraris tradisional primitif.",
+                    "Menyerahkan pengelolaan sumber daya alam secara penuh kepada pasar bebas tanpa intervensi regulasi lingkungan dari pemerintah.",
+                    "Memfokuskan seluruh anggaran negara pada sektor konsumsi masyarakat perkotaan tanpa memperhatikan kelayakan ekosistem di pedesaan."
                 ],
-                kunci: "B"
+                kunciIndex: 1
             }
         ];
-        // =====================================================
 
+        // ==================== VARIABLE GLOBAL ====================
         let sedangUjian = false;
         let dataSiswaAktif = {};
+        let soalDiacak = [];
 
-        // fungsi memuat daftar soal ke HTML
+        // Dynamic Dropdown Nama Siswa berdasarkan Kelas Ekonomi
+        function tampilkanSiswa() {
+            const selectKelas = document.getElementById("pilihKelas");
+            const containerNama = document.getElementById("pilihNama");
+            
+            if (!selectKelas || !containerNama) return;
+
+            const kelasTerpilih = selectKelas.value;
+            containerNama.innerHTML = '<option value="" disabled selected>-- Pilih Nama Siswa --</option>';
+
+            if (kelasTerpilih && dataSiswaPerKelas[kelasTerpilih]) {
+                dataSiswaPerKelas[kelasTerpilih].forEach(nama => {
+                    const option = document.createElement("option");
+                    option.value = nama;
+                    option.textContent = nama;
+                    containerNama.appendChild(option);
+                });
+            }
+        }
+
+        // Shuffle Array (Fisher-Yates)
+        function acakArray(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Acak Soal dan Opsi Jawaban
         function muatSoal() {
             const container = document.getElementById("questionsList");
             container.innerHTML = "";
 
-            bankSoal.forEach((item, index) => {
+            soalDiacak = acakArray(bankSoal).map(item => {
+                const teksKunci = item.pilihan[item.kunciIndex];
+                const pilihanAcak = acakArray(item.pilihan);
+                const kunciIndexBaru = pilihanAcak.indexOf(teksKunci);
+
+                return {
+                    id: item.id,
+                    soal: item.soal,
+                    pilihan: pilihanAcak,
+                    kunciIndex: kunciIndexBaru
+                };
+            });
+
+            soalDiacak.forEach((item, index) => {
                 const qDiv = document.createElement("div");
                 qDiv.className = "question-card";
 
@@ -498,7 +593,7 @@
                     pilihanHTML += `
                         <label>
                             <input type="radio" name="q${item.id}" value="${kodePilihan}">
-                            <span>${pil}</span>
+                            <span><b>${kodePilihan}.</b> ${pil}</span>
                         </label>
                     `;
                 });
@@ -513,123 +608,140 @@
 
         // Fungsi Memulai Ujian
         function mulaiUjian() {
-            const nama = document.getElementById("namaSiswa").value.trim();
+            const kelasEkonomi = document.getElementById("pilihKelas").value;
+            const nama = document.getElementById("pilihNama").value;
             const kelasUtama = document.getElementById("kelasUtama").value;
-            const kelasEkonomi = document.getElementById("kelasEkonomi").value;
             const noAbsen = document.getElementById("noAbsen").value;
             const token = document.getElementById("tokenMasuk").value;
 
             if (!nama || !kelasUtama || !kelasEkonomi || !noAbsen || !token) {
-                alert("Harap lengkapi semua data pendaftaran!");
+                alert("Harap lengkapi semua data pendaftaran ujian!");
                 return;
             }
 
             if (token !== TOKEN_MASUK_VALID) {
-                alert("Token masuk tidak valid! Periksa kembali token dari guru/pengawas.");
+                alert("Token masuk ujian tidak valid/salah!");
                 return;
             }
 
-            dataSiswaAktif = {
-                nama: nama,
-                kelasUtama: kelasUtama,
-                kelasEkonomi: kelasEkonomi,
-                noAbsen: noAbsen
-            };
+            dataSiswaAktif = { nama, kelasUtama, kelasEkonomi, noAbsen };
 
             document.getElementById("displayNama").innerText = nama.toUpperCase();
-            document.getElementById("displayDetail").innerText = `${kelasUtama} | ${kelasEkonomi} | No. Absen: ${noAbsen}`;
-
-            muatSoal();
+            document.getElementById("displayDetail").innerText = `Kelas Utama: ${kelasUtama} | ${kelasEkonomi} | No. Absen: ${noAbsen}`;
 
             document.getElementById("loginBox").style.display = "none";
             document.getElementById("examContainer").style.display = "block";
 
+            muatSoal();
             sedangUjian = true;
+
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
         }
 
-        // Deteksi Pengawas / Pindah Tab (Sistem Kunci)
-        window.addEventListener("blur", function() {
-            if (sedangUjian) {
-                document.getElementById("lockOverlay").style.display = "flex";
+        // Penguncian Layar Saat Berpindah Halaman/Tab
+        document.addEventListener("visibilitychange", function() {
+            if (sedangUjian && document.hidden) {
+                kunciLayar();
             }
         });
 
+        window.addEventListener("blur", function() {
+            if (sedangUjian) {
+                kunciLayar();
+            }
+        });
+
+        function kunciLayar() {
+            document.getElementById("lockOverlay").style.display = "flex";
+        }
+
         function bukaKunci() {
-            const pinInput = document.getElementById("pinPengawasInput").value;
-            if (pinInput === PIN_PENGAWAS) {
+            const pin = document.getElementById("pinPengawasInput").value;
+            if (pin === PIN_PENGAWAS) {
                 document.getElementById("lockOverlay").style.display = "none";
                 document.getElementById("pinPengawasInput").value = "";
             } else {
-                alert("PIN Pengawas salah!");
+                alert("PIN Pengawas Salah!");
             }
         }
 
-        // Selesai Ujian & Kirim Data
+        // Selesai dan Hitung Nilai
         function selesaiUjian() {
-            let benar = 0;
-            let salah = 0;
-            let totalSoal = bankSoal.length;
-            let jawabanSiswa = [];
-
-            bankSoal.forEach((item) => {
-                const selectedOption = document.querySelector(`input[name="q${item.id}"]:checked`);
-                const val = selectedOption ? selectedOption.value : "-";
-                
-                jawabanSiswa.push({
-                    soalId: item.id,
-                    jawaban: val
-                });
-
-                if (val === item.kunci) {
-                    benar++;
-                } else {
-                    salah++;
-                }
+            let belumDijawab = false;
+            soalDiacak.forEach(item => {
+                const checked = document.querySelector(`input[name="q${item.id}"]:checked`);
+                if (!checked) belumDijawab = true;
             });
 
-            const nilaiSkala100 = Math.round((benar / totalSoal) * 100);
-
-            if (!confirm("Apakah Anda yakin ingin menyelesaikan dan mengirim jawaban ujian ini?")) {
-                return;
+            if (belumDijawab) {
+                if (!confirm("Masih ada soal yang belum dijawab. Yakin ingin mengumpulkan jawaban?")) {
+                    return;
+                }
+            } else {
+                if (!confirm("Apakah Anda yakin ingin menyelesaikan ujian?")) {
+                    return;
+                }
             }
 
             sedangUjian = false;
+            let jumlahBenar = 0;
+
+            soalDiacak.forEach(item => {
+                const checked = document.querySelector(`input[name="q${item.id}"]:checked`);
+                if (checked) {
+                    const idxJawabanSiswa = checked.value.charCodeAt(0) - 65;
+                    if (idxJawabanSiswa === item.kunciIndex) {
+                        jumlahBenar++;
+                    }
+                }
+            });
+
+            const nilaiAkhir = Math.round((jumlahBenar / bankSoal.length) * 100);
 
             document.getElementById("examContainer").style.display = "none";
             document.getElementById("resultContainer").style.display = "block";
-            document.getElementById("studentInfo").innerText = `${dataSiswaAktif.nama} (${dataSiswaAktif.kelasUtama} / ${dataSiswaAktif.kelasEkonomi})`;
+            document.getElementById("studentInfo").innerText = `${dataSiswaAktif.nama} (${dataSiswaAktif.kelasUtama} - ${dataSiswaAktif.kelasEkonomi})`;
 
-            // Payload Kirim Data
+            kirimKeGoogleSheets(nilaiAkhir, jumlahBenar);
+        }
+
+        // Kirim Data ke Google Sheets Via Apps Script
+        function kirimKeGoogleSheets(nilai, benar) {
             const payload = {
                 nama: dataSiswaAktif.nama,
                 kelasUtama: dataSiswaAktif.kelasUtama,
                 kelasEkonomi: dataSiswaAktif.kelasEkonomi,
                 noAbsen: dataSiswaAktif.noAbsen,
                 benar: benar,
-                salah: salah,
-                nilai: nilaiSkala100,
-                detailJawaban: JSON.stringify(jawabanSiswa)
+                totalSoal: bankSoal.length,
+                nilai: nilai
             };
 
-            // Kirim ke Apps Script
             fetch(SCRIPT_URL, {
                 method: "POST",
                 mode: "no-cors",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             })
             .then(() => {
-                document.getElementById("statusPengiriman").innerText = "✅ Data nilai berhasil terkirim ke sistem rekap!";
+                document.getElementById("statusPengiriman").innerText = "✅ Data nilai berhasil tersimpan ke sistem rekap.";
                 document.getElementById("statusPengiriman").style.color = "#137333";
             })
-            .catch((err) => {
-                console.error(err);
-                document.getElementById("statusPengiriman").innerText = "⚠️ Terjadi kesalahan jaringan saat mengirim data. Tetap simpan halaman ini!";
+            .catch(err => {
+                document.getElementById("statusPengiriman").innerText = "⚠️ Gagal mengirim data secara otomatis. Harap lapor ke pengawas.";
                 document.getElementById("statusPengiriman").style.color = "#d93025";
             });
         }
+
+        // Event Listener Inisialisasi
+        document.addEventListener("DOMContentLoaded", function() {
+            const selectKelas = document.getElementById("pilihKelas");
+            if (selectKelas) {
+                selectKelas.addEventListener("change", tampilkanSiswa);
+            }
+        });
     </script>
 </body>
 </html>
