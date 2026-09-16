@@ -1,1 +1,558 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ujian CBT Ekonomi - SMAN 1 Cikalongwetan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 750px;
+        }
+        h2 {
+            color: #1a73e8;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        p.subtitle {
+            color: #5f6368;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #3c4043;
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #dadce0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
+        input:focus {
+            border-color: #1a73e8;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        button:hover {
+            background-color: #1557b0;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
 
+        /* Tampilan Ujian */
+        #examContainer {
+            display: none;
+        }
+        .question-card {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .question-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #202124;
+            margin-bottom: 12px;
+            line-height: 1.6;
+            text-align: justify;
+        }
+        .options-group label {
+            display: flex;
+            align-items: flex-start;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-weight: normal;
+            transition: background 0.2s;
+            line-height: 1.4;
+        }
+        .options-group label:hover {
+            background-color: #f8f9fa;
+        }
+        .options-group input {
+            width: auto;
+            margin-right: 12px;
+            margin-top: 3px;
+        }
+
+        /* Modal Layar Terkunci Pengawas */
+        #lockOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(217, 48, 37, 0.95);
+            z-index: 9999;
+            color: white;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        #lockOverlay h1 { font-size: 28px; margin-bottom: 10px; }
+        #lockOverlay p { font-size: 16px; margin-bottom: 25px; }
+        .pin-box {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 320px;
+            color: #333;
+        }
+        .pin-box input {
+            text-align: center;
+            font-size: 20px;
+            letter-spacing: 4px;
+            margin-bottom: 15px;
+        }
+        .btn-unlock { background-color: #d93025; }
+        .btn-unlock:hover { background-color: #b31d16; }
+
+        /* Tampilan Hasil */
+        #resultContainer {
+            display: none;
+            text-align: center;
+        }
+        .score-box {
+            font-size: 48px;
+            font-weight: bold;
+            color: #1a73e8;
+            margin: 20px 0;
+        }
+        #statusPengiriman {
+            font-size: 14px;
+            color: #5f6368;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. FORM LOGIN MASUK UJIAN -->
+    <div class="container" id="loginBox">
+        <h2>PORTAL UJIAN CBT</h2>
+        <p class="subtitle">Mata Pelajaran: Ekonomi | SMAN 1 Cikalongwetan</p>
+        
+        <div class="input-group">
+            <label>NAMA LENGKAP</label>
+            <input type="text" id="namaSiswa" placeholder="Masukkan nama lengkap" required>
+        </div>
+
+        <div class="input-group">
+            <label>TOKEN MASUK UJIAN</label>
+            <input type="password" id="tokenMasuk" placeholder="Masukkan Token Ujian" required>
+        </div>
+
+        <button onclick="mulaiUjian()">MULAI UJIAN</button>
+    </div>
+
+    <!-- 2. TAMPILAN SOAL UJIAN -->
+    <div class="container" id="examContainer">
+        <h3 id="displayNama" style="margin-bottom: 15px; color: #5f6368;"></h3>
+        <hr style="margin-bottom: 20px;">
+        
+        <form id="quizForm">
+            <div id="questionsList"></div>
+            <button type="button" id="btnKirim" onclick="selesaiUjian()">KIRIM JAWABAN</button>
+        </form>
+    </div>
+
+    <!-- 3. TAMPILAN HASIL SELESAI -->
+    <div class="container" id="resultContainer">
+        <h2>UJIAN SELESAI</h2>
+        <p class="subtitle">Terima kasih telah menyelesaikan ujian.</p>
+        <div class="score-box" id="scoreDisplay">0</div>
+        <p id="studentInfo"></p>
+        <p id="statusPengiriman">Mengirim data ke rekap nilai...</p>
+    </div>
+
+    <!-- 4. MODAL LAYAR TERKUNCI PENGAWAS -->
+    <div id="lockOverlay">
+        <h1>UJIAN TERKUNCI!</h1>
+        <p>Terdeteksi meninggalkan halaman ujian.<br>Silakan panggil <b>Pengawas</b> untuk membuka kuncian.</p>
+        
+        <div class="pin-box">
+            <label style="text-align: center; margin-bottom: 10px;">PIN PENGAWAS</label>
+            <input type="password" id="pinPengawasInput" placeholder="****" maxlength="8">
+            <button class="btn-unlock" onclick="bukaKunci()">BUKA KUNCIAN</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== KONFIGURASI ====================
+        const TOKEN_MASUK_VALID = "SMAN12026";
+        const PIN_PENGAWAS = "123456";
+        
+        // Link Apps Script
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxWdHbi5lsCvEHL5J7vUENRRc7QxKrFdUuC9yK0POY-too34bSTlYEcki9gO7L0FJup/exec";
+
+        // BANK SOAL EKONOMI (15 SOAL)
+        const bankSoal = [
+            {
+                id: 1,
+                soal: "Negara \"Makmur Sejahtera\" mencatatkan data makroekonomi pada akhir tahun anggaran 2025 dalam satuan miliar rupiah sebagai berikut: Produk Domestik Bruto (PDB) tercatat sebesar Rp950.000, pendapatan faktor produksi warga negara di luar negeri sebesar Rp45.000, dan pendapatan faktor produksi warga negara asing di dalam negeri sebesar Rp20.000. Penyusutan barang modal dan penggantian tercatat Rp35.000, pajak tidak langsung sebesar Rp25.000, serta subsidi pemerintah yang diberikan sebesar Rp10.000. Komponen dari laba bersih yang dialokasikan meliputi laba ditahan Rp15.000, pajak perseroan Rp12.000, dan iuran jaminan sosial/asuransi Rp8.000. Pemerintah juga mendistribusikan pembayaran transfer (transfer payment) kepada masyarakat sebesar Rp18.000, sementara pajak langsung yang wajib dibayar oleh penduduk tercatat sebesar Rp30.000.<br><br>Berdasarkan data komprehensif tersebut, besarnya Disposable Income (DI) negara \"Makmur Sejahtera\" adalah...",
+                pilihan: [
+                    "A. Rp838.000 miliar",
+                    "B. Rp858.000 miliar",
+                    "C. Rp868.000 miliar",
+                    "D. Rp888.000 miliar",
+                    "E. Rp918.000 miliar"
+                ],
+                kunci: "C"
+            },
+            {
+                id: 2,
+                soal: "Dalam dokumen laporan perekonomian nasional Negara \"Adikarya\" periode 2025, diperoleh data statistik pendapatan nasional yang menunjukkan nilai Pendapatan Nasional Neto (NNI) sebesar Rp1.450.000 miliar. Dalam sistem perpajakan dan alokasi keuntungan perusahaan di negara tersebut, tercatat bahwa dana pensiun dan iuran asuransi yang ditarik dari tenaga kerja mencapai Rp35.000 miliar, laba perusahaan yang sengaja tidak dibagikan kepada pemegang saham (laba ditahan) sebesar Rp45.000 miliar, serta besaran pajak atas laba perusahaan (pajak perseroan) sebesar Rp25.000 miliar. Di sisi lain, pemerintah menyalurkan dana bantuan sosial dan subsidi bagi hasil dalam bentuk transfer payment senilai Rp50.000 miliar. Sepanjang tahun tersebut, warga negara juga dikenakan kewajiban membayar pajak penghasilan langsung kepada kas negara sebesar Rp60.000 miliar.<br><br>Berdasarkan data keuangan tersebut, besarnya Disposable Income (DI) yang siap dibelanjakan oleh masyarakat Negara \"Adikarya\" adalah...",
+                pilihan: [
+                    "A. Rp1.325.000 miliar",
+                    "B. Rp1.355.000 miliar",
+                    "C. Rp1.385.000 miliar",
+                    "D. Rp1.415.000 miliar",
+                    "E. Rp1.445.000 miliar"
+                ],
+                kunci: "A"
+            },
+            {
+                id: 3,
+                soal: "Badan Pusat Statistik (BPS) sebuah negara berkembang menerbitkan data resmi terkait struktur perekonomian domestik dan demografi penduduk pada tahun 2025. Diketahui Produk Nasional Bruto (PNB) negara tersebut bernilai Rp750.000.000.000.000,00 (tujuh ratus lima puluh triliun rupiah). Total nilai penyusutan atas barang-barang modal selama proses produksi berjalan dalam tahun tersebut mencapai Rp50.000.000.000.000,00, serta besarnya pajak tidak langsung netto yang dipungut pemerintah tercatat sebesar Rp30.000.000.000.000,00. Berdasarkan hasil sensus penduduk mutakhir pertengahan tahun 2025, jumlah total penduduk di negara tersebut tercatat sebanyak 200 juta jiwa.<br><br>Berdasarkan data di atas, besarnya tingkat Pendapatan Per Kapita negara tersebut berdasarkan Pendapatan Nasional Neto (NNI) adalah...",
+                pilihan: [
+                    "A. Rp3.250.000,00 per jiwa",
+                    "B. Rp3.450.000,00 per jiwa",
+                    "C. Rp3.650.000,00 per jiwa",
+                    "D. Rp3.850.000,00 per jiwa",
+                    "E. Rp4.000.000,00 per jiwa"
+                ],
+                kunci: "C"
+            },
+            {
+                id: 4,
+                soal: "Pemerintah pusat suatu kawasan regional merilis data Produk Domestik Bruto (PDB) atas dasar harga konstan guna mengukur kinerja makroekonomi secara riil tanpa terdistorsi oleh faktor inflasi. PDB riil wilayah tersebut pada tahun 2024 tercatat sebesar Rp1.200 triliun. Seiring dengan pulihnya sektor investasi global dan peningkatan produktivitas industri manufaktur lokal, PDB riil wilayah tersebut mengalami akselerasi dan meningkat menjadi Rp1.296 triliun pada akhir tahun 2025. Tim perencana ekonomi daerah ditugaskan untuk menghitung tingkat dinamika ekspansi output agregat tersebut guna mengevaluasi pencapaian target Rencana Pembangunan Jangka Menengah Daerah (RPJMD).<br><br>Berdasarkan data tersebut, laju pertumbuhan ekonomi wilayah itu pada tahun 2025 adalah...",
+                pilihan: [
+                    "A. 6,5%",
+                    "B. 7,0%",
+                    "C. 7,5%",
+                    "D. 8,0%",
+                    "E. 8,5%"
+                ],
+                kunci: "D"
+            },
+            {
+                id: 5,
+                soal: "Laporan tahunan bank sentral sebuah negara berkembang menunjukkan adanya fluktuasi siklus bisnis dalam tiga tahun terakhir akibat dinamika rantai pasok global. Pada tahun 2023, Produk Domestik Bruto (PDB) riil negara tersebut berada pada angka Rp2.500 triliun. Memasuki tahun 2024, terjadi perlambatan ekonomi yang menyebabkan PDB riil terkoreksi tipis atau tumbuh secara moderat sehingga mencapai Rp2.600 triliun. Selanjutnya, pada tahun 2025, perekonomian kembali mencatatkan pertumbuhan yang lebih kuat dengan nilai PDB riil melonjak menjadi Rp2.782 triliun.<br><br>Berdasarkan data runtun waktu (time series) tersebut, berapa besar laju pertumbuhan ekonomi negara tersebut pada tahun 2025 jika dibandingkan dengan tahun 2024?",
+                pilihan: [
+                    "A. 7,0%",
+                    "B. 6,0%",
+                    "C. 6,5%",
+                    "D. 5,5%",
+                    "E. 7,5%"
+                ],
+                kunci: "A"
+            },
+            {
+                id: 6,
+                soal: "Dalam karyanya yang monumental, An Inquiry into the Nature and Causes of the Wealth of Nations (1776), Adam Smith meletakkan fondasi dasar mengenai bagaimana suatu kekayaan bangsa dapat ditingkatkan secara optimal melalui spesialisasi dan perluasan pasar. Smith menekankan bahwa mesin utama penggerak pertumbuhan ekonomi bukanlah intervensi birokratis pemerintah, melainkan kekuatan mekanisme pasar bebas yang didorong oleh pembagian kerja (division of labor) dan akumulasi kapital yang dilakukan secara mandiri oleh para pelaku usaha yang mengejar keuntungan pribadi namun secara tidak langsung dibimbing oleh \"tangan tak terlihat\" (invisible hand).<br><br>Pernyataan di bawah ini yang paling tepat mencerminkan pandangan mazhab Klasik menurut Adam Smith terhadap proses pertumbuhan ekonomi adalah...",
+                pilihan: [
+                    "A. Pertumbuhan ekonomi sepenuhnya dikendalikan oleh perencanaan terpusat negara melalui kepemilikan alat-alat produksi kolektif.",
+                    "B. Spesialisasi tenaga kerja dan perluasan pasar memicu peningkatan produktivitas yang menjadi motor utama akumulasi kekayaan bangsa.",
+                    "C. Pertumbuhan ekonomi jangka panjang akan mengalami kemandekan (stasioner) akibat berlakunya hukum hasil lebih yang semakin berkurang pada sektor lahan pertanian.",
+                    "D. Pertumbuhan ekonomi ditentukan secara mutlak oleh besarnya pengeluaran agregat pemerintah dalam menjaga stabilitas permintaan efektif jangka pendek.",
+                    "E. Akumulasi modal hanya dapat dicapai apabila kaum kapitalis menekan upah buruh serendah mungkin mendekati tingkat subsisten mutlak."
+                ],
+                kunci: "B"
+            },
+            {
+                id: 7,
+                soal: "Dalam analisis ekonomi politik klasik yang dikembangkan oleh David Ricardo, dinamika pertumbuhan ekonomi sangat dipengaruhi oleh interaksi antara tiga golongan utama dalam masyarakat, yaitu pemilik tanah, kaum pekerja (buruh), dan para pemilik modal (kapitalis). Ricardo berargumen bahwa pertumbuhan ekonomi jangka panjang memiliki kecenderungan alami untuk melambat dan akhirnya berhenti pada suatu titik yang disebut stationary state (keadaan stasioner). Hal ini terjadi karena pertumbuhan populasi mendesak pemanfaatan lahan pertanian yang semakin marjinal dan kurang subur, sehingga biaya produksi pangan melonjak.<br><br>Berdasarkan teori pertumbuhan ekonomi mazhab Klasik aliran David Ricardo, faktor utama yang menyebabkan perekonomian akhirnya mencapai titik stasioner adalah...",
+                pilihan: [
+                    "A. Terjadinya kejenuhan ekspor akibat proteksionisme perdagangan internasional antarnegara maju.",
+                    "B. Penurunan tingkat upah nominal secara drastis yang memicu revolusi sosial kaum buruh pabrik.",
+                    "C. Keterbatasan ketersediaan lahan subur yang memicu kenaikan sewa tanah dan biaya hidup serta upah subsisten.",
+                    "D. Keengganan pemerintah dalam mencetak uang kartal untuk membiayai proyek infrastruktur publik.",
+                    "E. Dominasi sektor industri modern yang sepenuhnya menggantikan peranan sektor agraris tradisional."
+                ],
+                kunci: "C"
+            },
+            {
+                id: 8,
+                soal: "W.W. Rostow dalam bukunya The Stages of Economic Growth mengemukakan pandangan bahwa proses pembangunan ekonomi historis yang dialami oleh setiap negara dapat diklasifikasikan ke dalam lima tahapan linier yang berurutan, mulai dari masyarakat tradisional hingga tahap konsumsi massal tinggi. Salah satu fase krusial dalam teori ini ditandai dengan runtuhnya hambatan-hambatan tradisional, dimulainya investasi produktif secara masif (biasanya mencapai kisaran 10% dari Pendapatan Nasional), berkembangnya sektor industri manufaktur baru secara cepat, serta terciptanya kerangka institusi politik dan sosial yang mendukung modernisasi ekonomi.<br><br>Tahapan pertumbuhan ekonomi menurut W.W. Rostow yang digambarkan melalui karakteristik di atas dikenal sebagai fase...",
+                pilihan: [
+                    "A. Masyarakat tradisional (The traditional society)",
+                    "B. Prasyarat untuk tinggal landas (The preconditions for take-off)",
+                    "C. Tinggal landas (The take-off)",
+                    "D. Menuju kedewasaan (The drive to maturity)",
+                    "E. Era konsumsi massal tinggi (The age of high mass-consumption)"
+                ],
+                kunci: "B"
+            },
+            {
+                id: 9,
+                soal: "Sebuah negara berkembang di kawasan Asia Tenggara sedang mengalami transformasi struktural yang sangat masif. Sektor pertanian subsisten tradisional perlahan-lahan mulai ditinggalkan karena tenaga kerja beralih secara besar-besaran ke sektor industri modern dan perkotaan. Investasi domestik melonjak tajam, teknologi modern diadopsi secara luas dalam proses produksi, dan pertumbuhan ekonomi menjadi fenomena yang permanen serta swasembada (self-sustained growth). Berdasarkan kerangka pemikiran historis W.W. Rostow, negara tersebut kini sedang berada pada fase lompatan struktural yang sangat menentukan arah kemajuan ekonominya.<br><br>Fase atau tahapan pertumbuhan ekonomi Rostow yang sedang dialami oleh negara tersebut adalah...",
+                pilihan: [
+                    "A. The traditional society",
+                    "B. The preconditions for take-off",
+                    "C. The take-off (Tinggal landas)",
+                    "D. The drive to maturity",
+                    "E. The age of high mass-consumption"
+                ],
+                kunci: "C"
+            },
+            {
+                id: 10,
+                soal: "Pertumbuhan ekonomi sering kali diartikan secara keliru sebagai sinonim dari pembangunan ekonomi secara keseluruhan. Padahal, secara konseptual, pertumbuhan ekonomi memiliki cakupan yang lebih spesifik, yaitu peningkatan kapasitas produksi barang dan jasa suatu perekonomian dalam kurun waktu tertentu, yang biasanya diukur melalui persentase perubahan Produk Domestik Bruto (PDB) riil. Fokus utama dari analisis pertumbuhan ekonomi bersifat kuantitatif murni tanpa harus menelaah secara mendalam apakah distribusi pendapatan sudah merata atau apakah struktur sosial masyarakat telah mengalami perbaikan fundamental.<br><br>Pernyataan berikut ini yang paling akurat dalam membedakan karakteristik pertumbuhan ekonomi dibandingkan dengan pembangunan ekonomi adalah...",
+                pilihan: [
+                    "A. Pertumbuhan ekonomi selalu mencakup perbaikan kualitas hidup, penurunan tingkat kemiskinan, dan pemerataan distribusi pendapatan secara simultan.",
+                    "B. Pertumbuhan ekonomi merupakan proses multidimensional yang mengubah struktur kelembagaan, sikap mental, dan sistem sosial masyarakat.",
+                    "C. Pertumbuhan ekonomi berfokus pada peningkatan output fisik agregat (kenaikan PDB riil), terlepas dari persoalan pemerataan hasil pembangunan tersebut.",
+                    "D. Pertumbuhan ekonomi hanya dapat tercapai jika suatu negara menerapkan sistem ekonomi komando terpusat yang ketat.",
+                    "E. Pertumbuhan ekonomi tidak memerlukan akumulasi modal fisik maupun investasi teknologi baru dalam sektor industri."
+                ],
+                kunci: "C"
+            },
+            {
+                id: 11,
+                soal: "Joseph Schumpeter mengemukakan teori pertumbuhan ekonomi yang sangat unik karena menempatkan kaum wirausahawan (entrepreneurs / inovator) sebagai motor penggerak utama dinamika kapitalisme. Menurut Schumpeter, pertumbuhan ekonomi bukanlah proses yang berjalan mulus secara linier, melainkan proses \"pembongkaran kreatif\" (creative destruction) di mana inovasi terus-menerus merusak keseimbangan lama untuk menciptakan struktur ekonomi yang baru dan lebih efisien. Inovasi ini dapat berupa penemuan produk baru, metode produksi baru, pembukaan pasar baru, atau sumber bahan baku baru.<br><br>Berdasarkan teori pertumbuhan ekonomi Joseph Schumpeter, manakah fenomena berikut yang paling tepat merepresentasikan konsep creative destruction?",
+                pilihan: [
+                    "A. Pemerintah menaikkan tarif pajak penghasilan badan secara progresif untuk meredam laju inflasi musiman.",
+                    "B. Perusahaan transportasi berbasis aplikasi digital (ridesharing) hadir dan mendisrupsi sistem transportasi konvensional yang berujung pada perubahan pola mobilitas masyarakat.",
+                    "C. Bank sentral memutuskan untuk menurunkan suku bunga acuan guna merangsang ekspansi kredit perbankan komersial.",
+                    "D. Pemerintah daerah memperluas kawasan lahan pertanian subsisten demi mencapai swasembada pangan daerah.",
+                    "E. Masyarakat mengurangi tingkat konsumsi barang mewah dan meningkatkan angka tabungan di lembaga keuangan formal."
+                ],
+                kunci: "B"
+            },
+            {
+                id: 12,
+                soal: "Model pertumbuhan ekonomi Harrod-Domar merupakan salah satu model pasca-Keynesian yang menganalisis syarat-syarat yang harus dipenuhi agar suatu perekonomian dapat tumbuh dengan stabil dalam jangka panjang (steady growth). Model ini menekankan peran kunci dari investasi modal fisik. Menurut Harrod-Domar, setiap tambahan investasi neto akan menciptakan kapasitas produksi sekaligus melipatgandakan pendapatan nasional melalui mekanisme pengganda (multiplier), di mana laju pertumbuhan ekonomi sangat ditentukan oleh rasio tabungan masyarakat dan rasio modal terhadap output (capital-output ratio / ICOR).<br><br>Implikasi kebijakan utama yang dapat ditarik dari model pertumbuhan ekonomi Harrod-Domar bagi negara berkembang adalah...",
+                pilihan: [
+                    "A. Negara harus membatasi masuknya investasi asing langsung demi melindungi pengusaha domestik tradisional.",
+                    "B. Peningkatan porsi tabungan nasional dan efisiensi penggunaan modal investasi merupakan syarat mutlak untuk mempercepat pertumbuhan output.",
+                    "C. Pemerintah harus menghapuskan seluruh bentuk sistem perbankan komersial dan menggantinya dengan barter terpusat.",
+                    "D. Pertumbuhan ekonomi hanya bergantung pada jumlah curah hujan dan kesuburan tanah alami tanpa butuh akumulasi modal.",
+                    "E. Kebijakan moneter kontraktif harus terus diterapkan secara permanen untuk menekan laju investasi swasta."
+                ],
+                kunci: "B"
+            },
+            {
+                id: 13,
+                soal: "Berbeda dengan mazhab Klasik atau model Harrod-Domar yang mengasumsikan proporsi penggunaan faktor produksi yang kaku, model pertumbuhan Neo-Klasik yang dikembangkan oleh Robert Solow dan Trevor Swan memperkenalkan fungsi produksi dengan asumsi fleksibilitas substitusi antara modal dan tenaga kerja serta berlakunya hukum hasil lebih yang semakin berkurang (diminishing returns) pada akumulasi modal fisik. Dalam model Solow-Swan jangka panjang, pertumbuhan ekonomi tanpa adanya kemajuan teknologi akan mencapai suatu titik keseimbangan mapan (steady state) di mana pertumbuhan pendapatan per kapita akan berhenti kecuali didorong oleh inovasi teknologi eksogen.<br><br>Faktor penentu utama pertumbuhan ekonomi jangka panjang dalam kerangka model Solow-Swan adalah...",
+                pilihan: [
+                    "A. Jumlah cadangan devisa hasil ekspor komoditas mentah non-migas.",
+                    "B. Tingkat pertumbuhan populasi absolut di daerah pedesaan.",
+                    "C. Kemajuan teknologi (technological progress) yang meningkatkan produktivitas total faktor (Total Factor Productivity).",
+                    "D. Besarnya proteksi tarif bea masuk yang diterapkan terhadap produk manufaktur impor.",
+                    "E. Jumlah tenaga kerja kasar yang tidak memiliki keahlian khusus di sektor informal."
+                ],
+                kunci: "C"
+            },
+            {
+                id: 14,
+                soal: "Dalam fase akhir dari rangkaian model pembangunan ekonomi historis menurut W.W. Rostow, struktur perekonomian suatu bangsa telah mencapai tingkat kematangan yang luar biasa. Sektor industri memegang dominasi penuh dengan teknologi yang sangat canggih, sebagian besar tenaga kerja telah beralih menjadi tenaga ahli dan pekerja kerah putih, serta pendapatan riil per kapita penduduk meningkat drastis. Pada tahap ini, perhatian masyarakat tidak lagi terpusat pada pemenuhan kebutuhan pokok dasar semata, melainkan beralih pada upaya memperluas jangkauan layanan kesejahteraan sosial, penyediaan barang-barang konsumsi tahan lama berkualitas tinggi secara massal, serta rekreasi.<br><br>Tahapan pertumbuhan ekonomi Rostow yang merujuk pada kondisi deskripsi di atas adalah...",
+                pilihan: [
+                    "A. The preconditions for take-off",
+                    "B. The take-off",
+                    "C. The drive to maturity",
+                    "D. The age of high mass-consumption",
+                    "E. The traditional society"
+                ],
+                kunci: "D"
+            },
+            {
+                id: 15,
+                soal: "Berbagai mazhab pemikiran ekonomi menawarkan sudut pandang yang beragam mengenai sumber utama kemajuan ekonomi suatu bangsa. Kaum Klasik menekankan spesialisasi dan akumulasi modal di bawah naungan pasar bebas; Joseph Schumpeter menyoroti peran sentral inovasi kreatif para wirausahawan; sementara teori pertumbuhan modern (Endogen dan Neo-Klasik) menempatkan akumulasi modal manusia (human capital), riset dan pengembangan (R&D), serta kemajuan teknologi sebagai determinan utama pertumbuhan ekonomi berkesinambungan.<br><br>Apabila dikaji dari perspektif teori pertumbuhan ekonomi modern endogen, faktor yang paling membedakan pendorong pertumbuhan ekonomi dibandingkan pandangan teori Klasik konvensional adalah penekanan pada...",
+                pilihan: [
+                    "A. Kepemilikan mutlak tanah pertanian subur oleh kaum bangsawan feodal.",
+                    "B. Peran sentral pengetahuan, investasi sumber daya manusia, serta inovasi teknologi yang dapat menghasilkan limpahan manfaat (spillover effects).",
+                    "C. Kebijakan anggaran belanja negara yang mengalami defisit struktural secara terus-menerus.",
+                    "D. Pembatasan ketat mobilitas tenaga kerja lintas batas antarnegara berkembang.",
+                    "E. Penghapusan sistem hak kekayaan intelektual demi tercapainya kesetaraan sosial komunal."
+                ],
+                kunci: "B"
+            }
+        ];
+        // =====================================================
+
+        let sedangUjian = false;
+        let namaSiswaAktif = "";
+
+        function muatSoal() {
+            const container = document.getElementById("questionsList");
+            container.innerHTML = "";
+
+            bankSoal.forEach((item, index) => {
+                const qDiv = document.createElement("div");
+                qDiv.className = "question-card";
+
+                let pilihanHTML = "";
+                item.pilihan.forEach((pil, pilIndex) => {
+                    const kodePilihan = String.fromCharCode(65 + pilIndex);
+                    pilihanHTML += `
+                        <label>
+                            <input type="radio" name="q${item.id}" value="${kodePilihan}">
+                            <span>${pil}</span>
+                        </label>
+                    `;
+                });
+
+                qDiv.innerHTML = `
+                    <div class="question-title"><b>${index + 1}.</b> ${item.soal}</div>
+                    <div class="options-group">${pilihanHTML}</div>
+                `;
+                container.appendChild(qDiv);
+            });
+        }
+
+        function mulaiUjian() {
+            const nama = document.getElementById("namaSiswa").value.trim();
+            const tokenInput = document.getElementById("tokenMasuk").value.trim();
+
+            if (!nama) {
+                alert("Harap isi Nama Lengkap terlebih dahulu!");
+                return;
+            }
+            if (tokenInput !== TOKEN_MASUK_VALID) {
+                alert("Token Ujian Salah!");
+                return;
+            }
+
+            namaSiswaAktif = nama;
+            document.getElementById("displayNama").innerText = "Siswa: " + nama;
+            
+            muatSoal();
+
+            document.getElementById("loginBox").style.display = "none";
+            document.getElementById("examContainer").style.display = "block";
+            
+            sedangUjian = true;
+        }
+
+        function selesaiUjian() {
+            if (!confirm("Apakah Anda yakin ingin menyelesaikan ujian?")) return;
+
+            document.getElementById("btnKirim").disabled = true;
+            document.getElementById("btnKirim").innerText = "Memproses...";
+
+            let benar = 0;
+            bankSoal.forEach(q => {
+                const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
+                if (selected && selected.value === q.kunci) {
+                    benar++;
+                }
+            });
+
+            const totalSoal = bankSoal.length;
+            const nilaiAkhir = Math.round((benar / totalSoal) * 100);
+
+            sedangUjian = false; // Matikan deteksi kuncian
+            
+            document.getElementById("examContainer").style.display = "none";
+            document.getElementById("resultContainer").style.display = "block";
+            document.getElementById("scoreDisplay").innerText = nilaiAkhir;
+            document.getElementById("studentInfo").innerText = `Nama: ${namaSiswaAktif} | Benar: ${benar} dari ${totalSoal} Soal`;
+
+            // Kirim Data ke Google Sheets
+            kirimKeGoogleSheets(namaSiswaAktif, benar, totalSoal, nilaiAkhir);
+        }
+
+        function kirimKeGoogleSheets(nama, benar, totalSoal, nilai) {
+            const statusElement = document.getElementById("statusPengiriman");
+
+            if (!SCRIPT_URL || SCRIPT_URL === "TEMPEL_URL_APPS_SCRIPT_ANDA_DI_SINI") {
+                statusElement.innerText = "Selesai (URL Apps Script belum dikonfigurasi).";
+                return;
+            }
+
+            const payload = {
+                nama: nama,
+                benar: benar,
+                totalSoal: totalSoal,
+                nilai: nilai
+            };
+
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                statusElement.innerText = "✓ Nilai berhasil direkap ke Google Sheets!";
+                statusElement.style.color = "#0f9d58";
+            })
+            .catch(error => {
+                console.error("Gagal mengirim:", error);
+                statusElement.innerText = "× Gagal mengirim ke Google Sheets. Hubungi pengawas.";
+                statusElement.style.color = "#d93025";
+            });
+        }
+
+        // --- SISTEM DETEKSI PELANGGARAN ---
+        document.addEventListener("visibilitychange", function() {
+            if (document.hidden && sedangUjian) {
+                kunciLayar();
+            }
+        });
+
+        function kunciLayar() {
+            document.getElementById("lockOverlay").style.display = "flex";
+        }
+
+        function bukaKunci() {
+            const inputPIN = document.getElementById("pinPengawasInput").value;
+
+            if (inputPIN === PIN_PENGAWAS) {
+                document.getElementById("lockOverlay").style.display = "none";
+                document.getElementById("pinPengawasInput").value = "";
+                alert("Kuncian berhasil dibuka. Silakan lanjutkan ujian.");
+            } else {
+                alert("PIN Pengawas Salah!");
+                document.getElementById("pinPengawasInput").value = "";
+            }
+        }
+    </script>
+</body>
+</html>
